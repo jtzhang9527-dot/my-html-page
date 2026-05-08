@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>发货单管理系统专业版</title>
+    <title>发货单管理系统-手机优化版</title>
     <style>
         :root {
             --primary: #4361ee;
@@ -23,16 +23,16 @@
             overflow-x: hidden;
         }
 
-        /* 页面切换核心样式 */
+        /* 页面切换动画 */
         .page { 
             display: none; 
             min-height: 100vh; 
             width: 100%;
-            padding: 15px;
+            padding: 12px;
             animation: fadeIn 0.2s ease-in-out;
         }
         .page.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
         /* 首页样式 */
         #page-home { 
@@ -46,72 +46,83 @@
         #page-home.active { display: flex; }
         .home-logo { font-size: 60px; margin-bottom: 20px; }
         .btn-main { 
-            background: var(--primary); 
-            color: white; 
-            border: none; 
-            padding: 18px 40px; 
-            border-radius: 50px; 
-            font-size: 20px; 
-            font-weight: bold;
-            box-shadow: 0 10px 20px rgba(67, 97, 238, 0.3);
-            transition: 0.3s;
-            cursor: pointer;
+            background: var(--primary); color: white; border: none; padding: 18px 40px; 
+            border-radius: 50px; font-size: 20px; font-weight: bold;
+            box-shadow: 0 10px 20px rgba(67, 97, 238, 0.3); transition: 0.3s; cursor: pointer;
         }
         .btn-main:disabled { background: #ccc; box-shadow: none; }
 
-        /* 通用组件 */
-        button { border: none; border-radius: 6px; padding: 10px 15px; cursor: pointer; font-size: 14px; transition: 0.2s; }
-        button:active { transform: scale(0.98); opacity: 0.9; }
+        /* 通用按钮 */
+        button { border: none; border-radius: 6px; padding: 10px 15px; cursor: pointer; font-size: 14px; }
         .btn-sec { background: #6c757d; color: white; }
         .btn-danger { background: var(--danger); color: white; }
-        input, select { padding: 8px; border: 1px solid var(--border); border-radius: 6px; outline: none; }
 
         /* 日历样式 */
-        .calendar-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; background: white; padding: 15px; border-radius: 10px; }
-        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; background: white; padding: 10px; border-radius: 10px; }
-        .day-header { text-align: center; font-weight: bold; font-size: 12px; color: #888; padding: 5px 0; }
+        .calendar-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; background: white; padding: 12px; border-radius: 10px; }
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; background: white; padding: 8px; border-radius: 10px; }
+        .day-header { text-align: center; font-size: 12px; color: #888; padding-bottom: 5px; }
         .day-cell { 
-            background: #fff; border: 1px solid #f0f0f0; height: 70px; 
+            background: #fff; border: 1px solid #f0f0f0; height: 60px; 
             display: flex; flex-direction: column; align-items: center; justify-content: center; 
-            border-radius: 6px; cursor: pointer; position: relative;
+            border-radius: 6px; position: relative;
         }
-        .day-cell.today { background: #eef2ff; border-color: var(--primary); }
-        .day-cell .num { font-weight: bold; font-size: 16px; }
-        .day-cell .badge { font-size: 10px; color: var(--primary); margin-top: 4px; font-weight: bold; }
+        .day-cell.today { border: 2px solid var(--primary); background: #f0f4ff; }
+        .day-cell .num { font-weight: bold; font-size: 15px; }
+        .day-cell .badge { font-size: 9px; color: var(--primary); font-weight: bold; margin-top: 2px; }
 
-        /* 列表页样式 */
+        /* 列表页-顶部栏 */
         .sticky-bar { 
-            position: sticky; top: -15px; z-index: 100; 
+            position: sticky; top: 0; z-index: 100; 
             background: var(--bg); padding: 10px 0; 
-            border-bottom: 1px solid var(--border);
             display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
         }
+
+        /* --- 核心优化：产品卡片布局 --- */
         .product-card { 
-            background: white; border-radius: 12px; padding: 12px; margin-bottom: 15px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05); display: flex; gap: 12px; align-items: flex-start;
+            background: white; border-radius: 12px; padding: 12px; margin-bottom: 12px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+            display: flex; gap: 10px; align-items: flex-start;
         }
-        .item-img { width: 85px; height: 85px; object-fit: cover; border-radius: 8px; background: #eee; flex-shrink: 0; }
-        .item-info { flex: 1; min-width: 0; }
-        .item-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-bottom: 8px; }
-        .item-inputs input { font-size: 12px; padding: 4px 6px; }
 
-        .size-grid { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; }
-        .size-item { 
-            background: #f8f9fa; border: 1px solid #eee; border-radius: 6px; 
-            min-width: 55px; text-align: center; padding: 4px; flex-shrink: 0;
+        /* 左侧列：选择框 + 图片 + 图片下方信息 */
+        .item-left {
+            width: 85px; display: flex; flex-direction: column; align-items: center; gap: 5px; flex-shrink: 0;
         }
-        .size-item div { font-size: 11px; font-weight: bold; margin-bottom: 3px; }
-        .size-item input { width: 100%; border: none; border-bottom: 1px solid #ddd; background: transparent; text-align: center; padding: 2px 0; font-size: 13px; }
+        .item-img { width: 85px; height: 85px; object-fit: cover; border-radius: 8px; background: #eee; }
+        .item-meta-info { width: 100%; }
+        .item-meta-info input { 
+            width: 100%; border: none; background: #f4f4f4; border-radius: 4px;
+            font-size: 11px; padding: 4px; margin-bottom: 4px; text-align: center;
+        }
 
-        .item-summary { 
-            border-left: 1px dashed #ddd; padding-left: 10px; 
-            display: flex; flex-direction: column; justify-content: center; gap: 5px;
+        /* 中间列：尺码输入网格 */
+        .item-middle { flex: 1; min-width: 0; }
+        .size-grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
+            gap: 6px;
         }
-        .sum-box { text-align: center; min-width: 50px; }
-        .sum-box .label { font-size: 10px; color: #888; display: block; }
-        .sum-box .val { font-size: 18px; font-weight: 900; }
-        .val.ship { color: var(--primary); }
-        .val.ret { color: var(--danger); }
+        .size-box {
+            background: #f9f9f9; border: 1px solid #eee; border-radius: 6px; padding: 4px;
+            display: flex; flex-direction: column; align-items: center;
+        }
+        .size-label { font-size: 11px; font-weight: bold; color: #555; margin-bottom: 2px; }
+        .size-box input { 
+            width: 100%; border: none; border-bottom: 1px solid #ccc; background: transparent;
+            text-align: center; font-size: 13px; padding: 2px 0; color: var(--primary);
+        }
+        .size-box input.ret-input { color: var(--danger); border-bottom-color: #ffcccc; }
+
+        /* 右侧列：汇总数值 */
+        .item-right {
+            display: flex; flex-direction: column; gap: 8px; padding-left: 8px;
+            border-left: 1px dashed #eee; align-self: stretch; justify-content: center;
+        }
+        .summary-unit { text-align: center; }
+        .summary-unit .lab { font-size: 10px; color: #999; display: block; }
+        .summary-unit .val { font-size: 16px; font-weight: 900; }
+        .val.s { color: var(--primary); }
+        .val.r { color: var(--danger); }
 
         /* 弹窗样式 */
         .modal { 
@@ -119,17 +130,12 @@
             background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center; 
         }
         .modal.active { display: flex; }
-        .modal-content { background: white; width: 95%; max-width: 500px; border-radius: 15px; padding: 20px; max-height: 90vh; overflow-y: auto; }
-        .history-scroll { display: flex; gap: 10px; overflow-x: auto; padding: 10px 0; margin-bottom: 15px; }
-        .hist-card { border: 2px solid transparent; border-radius: 8px; text-align: center; cursor: pointer; min-width: 70px; }
+        .modal-content { background: white; width: 92%; max-width: 500px; border-radius: 15px; padding: 18px; max-height: 90vh; overflow-y: auto; }
+        
+        .history-scroll { display: flex; gap: 10px; overflow-x: auto; padding: 8px 0; }
+        .hist-card { border: 2px solid transparent; border-radius: 8px; text-align: center; min-width: 65px; }
         .hist-card.selected { border-color: var(--primary); background: #f0f4ff; }
-        .hist-card img { width: 60px; height: 60px; object-fit: cover; border-radius: 4px; }
-
-        @media (max-width: 600px) {
-            .product-card { flex-direction: column; }
-            .item-summary { border-left: none; border-top: 1px dashed #eee; padding-left: 0; padding-top: 10px; flex-direction: row; width: 100%; justify-content: space-around; }
-            .item-img { width: 60px; height: 60px; }
-        }
+        .hist-card img { width: 55px; height: 55px; object-fit: cover; border-radius: 4px; }
     </style>
 </head>
 <body>
@@ -137,85 +143,82 @@
     <!-- 首页 -->
     <div id="page-home" class="page active">
         <div class="home-logo">📦</div>
-        <h1 style="margin-bottom: 10px;">发货管理系统</h1>
-        <p style="color: #666; margin-bottom: 30px;">大容量 IndexedDB 存储版</p>
+        <h2 style="margin-bottom: 10px;">发货管理系统</h2>
         <button id="btn-enter" class="btn-main" disabled>正在初始化...</button>
-        <button onclick="clearAllData()" style="margin-top: 40px; background: none; color: #aaa; text-decoration: underline; font-size: 12px;">重置并清空所有数据</button>
+        <button onclick="clearAllData()" style="margin-top: 40px; background: none; color: #aaa; text-decoration: underline; font-size: 12px;">清空所有数据</button>
     </div>
 
     <!-- 日历页 -->
     <div id="page-calendar" class="page">
         <div class="calendar-nav">
-            <button class="btn-sec" onclick="changeMonth(-1)">◀ 上月</button>
-            <h2 id="month-title">2023年10月</h2>
-            <button class="btn-sec" onclick="changeMonth(1)">下月 ▶</button>
+            <button class="btn-sec" onclick="changeMonth(-1)">上月</button>
+            <h3 id="month-title">2023年10月</h3>
+            <button class="btn-sec" onclick="changeMonth(1)">下月</button>
         </div>
         
-        <div style="margin-bottom: 15px; display: flex; gap: 10px; justify-content: center;">
-            <select id="sel-year" onchange="jumpToDate()"></select>
-            <select id="sel-month" onchange="jumpToDate()"></select>
-            <button class="btn-sec" onclick="goToday()">回今天</button>
+        <div style="margin-bottom: 12px; display: flex; gap: 6px;">
+            <select id="sel-year" onchange="jumpToDate()" style="flex:1; padding:8px;"></select>
+            <select id="sel-month" onchange="jumpToDate()" style="flex:1; padding:8px;"></select>
+            <button class="btn-sec" onclick="goToday()">今天</button>
         </div>
 
         <div class="calendar-grid" id="calendar-grid"></div>
 
-        <div id="calendar-stat" style="margin-top: 20px; background: white; padding: 20px; border-radius: 12px; text-align: center;">
-            <div style="color: #888; font-size: 14px; margin-bottom: 5px;">今日概览</div>
+        <div id="calendar-stat" style="margin-top: 15px; background: white; padding: 15px; border-radius: 12px; text-align: center;">
             <div id="stat-content">--</div>
         </div>
         
-        <button onclick="showPage('page-home')" style="width:100%; margin-top:20px; padding:15px; background:#ddd;">返回首页</button>
+        <button onclick="showPage('page-home')" style="width:100%; margin-top:20px; padding:12px; background:#eee; border-radius:8px;">返回首页</button>
     </div>
 
     <!-- 列表页 -->
     <div id="page-list" class="page">
         <div class="sticky-bar">
-            <button class="btn-sec" onclick="showPage('page-calendar')">◀ 返回</button>
-            <strong id="list-date-label" style="flex:1; font-size:16px;"></strong>
-            <button style="background:var(--primary); color:white" onclick="openAddModal()">+ 新增货物</button>
+            <button class="btn-sec" onclick="showPage('page-calendar')" style="padding:8px 10px;">◀</button>
+            <strong id="list-date-label" style="flex:1; font-size:15px;"></strong>
+            <button style="background:var(--primary); color:white" onclick="openAddModal()">+ 新增</button>
             <button class="btn-danger" onclick="deleteSelected()">删除</button>
-            <button class="btn-sec" id="btn-group" onclick="toggleGroup()">按货源分类</button>
+            <button class="btn-sec" onclick="toggleGroup()">分类</button>
         </div>
 
-        <div id="product-list-container" style="margin-top: 15px;"></div>
+        <div id="product-list-container"></div>
     </div>
 
     <!-- 新增弹窗 -->
     <div id="modal-add" class="modal">
         <div class="modal-content">
-            <h3 style="margin-bottom:15px;">新增货物</h3>
+            <h3 style="margin-bottom:12px;">新增货物</h3>
             
-            <label style="font-size:12px; color:#888;">从最近使用中选择：</label>
+            <label style="font-size:12px; color:#888;">最近使用：</label>
             <div class="history-scroll" id="history-list"></div>
 
-            <div style="margin-bottom:15px;">
-                <label style="display:block; margin-bottom:5px; font-weight:bold;">1. 上传新图片</label>
-                <input type="file" id="file-input" accept="image/*" style="width:100%">
-                <img id="img-preview" style="width:80px; height:80px; object-fit:cover; display:none; margin-top:10px; border-radius:5px;">
+            <div style="margin:15px 0;">
+                <input type="file" id="file-input" accept="image/*" style="font-size:12px;">
+                <img id="img-preview" style="width:70px; height:70px; object-fit:cover; display:none; margin-top:10px; border-radius:5px;">
             </div>
 
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:20px;">
                 <div>
-                    <label style="display:block; margin-bottom:5px; font-weight:bold;">2. 价格</label>
-                    <input type="number" id="form-price" placeholder="金额" style="width:100%">
+                    <label style="display:block; font-size:12px; margin-bottom:4px;">发货价</label>
+                    <input type="number" id="form-price" style="width:100%; padding:8px; border:1px solid #ddd;">
                 </div>
                 <div>
-                    <label style="display:block; margin-bottom:5px; font-weight:bold;">3. 货源</label>
-                    <input type="text" id="form-source" list="source-options" placeholder="货源地" style="width:100%">
+                    <label style="display:block; font-size:12px; margin-bottom:4px;">货源地</label>
+                    <input type="text" id="form-source" list="source-options" style="width:100%; padding:8px; border:1px solid #ddd;">
                     <datalist id="source-options"></datalist>
                 </div>
             </div>
 
             <div style="display:flex; gap:10px;">
                 <button class="btn-sec" style="flex:1" onclick="closeModal()">取消</button>
-                <button style="flex:2; background:var(--primary); color:white;" onclick="handleSave()">保存到今日清单</button>
+                <button style="flex:2; background:var(--primary); color:white;" onclick="handleSave()">保存</button>
             </div>
         </div>
     </div>
 
 <script>
-    /* --- 数据库与数据引擎 --- */
-    const DB_NAME = 'ShipDB_Pro';
+    /* --- 核心逻辑 --- */
+    const DB_NAME = 'ShipDB_PhoneOptimized';
     const STORE_NAME = 'DataStore';
     let db_cache = {};
     const SIZES = ['S', 'M', 'L', 'XL', '2XL', '3XL', '4XL'];
@@ -244,13 +247,9 @@
     }
 
     function clearAllData() {
-        if(confirm("确定要永久清空所有数据和图片吗？")) {
-            indexedDB.deleteDatabase(DB_NAME);
-            location.reload();
-        }
+        if(confirm("确定清空吗？")) { indexedDB.deleteDatabase(DB_NAME); location.reload(); }
     }
 
-    /* --- 核心业务变量 --- */
     let viewDate = new Date();
     let activeDateStr = '';
     let isGrouped = false;
@@ -259,39 +258,26 @@
     window.onload = async () => {
         db_cache = await loadAll();
         const btn = document.getElementById('btn-enter');
-        btn.innerText = '进入管理系统';
+        btn.innerText = '进入系统';
         btn.disabled = false;
-        btn.onclick = () => {
-            showPage('page-calendar');
-            renderCalendar();
-        };
+        btn.onclick = () => { showPage('page-calendar'); renderCalendar(); };
         initSelectors();
     };
 
-    /* --- 导航控制 --- */
-    function showPage(pageId) {
-        // 1. 隐藏所有页面
+    function showPage(id) {
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-        // 2. 强制回到顶部
-        window.scrollTo(0, 0);
-        // 3. 显示目标页
-        const target = document.getElementById(pageId);
-        target.classList.add('active');
-        
-        // 4. 特殊页面逻辑
-        if(pageId === 'page-calendar') {
-            updateGlobalStat(fmtDate(new Date()));
-        }
+        document.getElementById(id).classList.add('active');
+        window.scrollTo(0,0);
+        if(id === 'page-calendar') updateGlobalStat(fmtDate(new Date()));
     }
 
-    /* --- 日历逻辑 --- */
+    /* --- 日历部分 --- */
     function initSelectors() {
         const ys = document.getElementById('sel-year'), ms = document.getElementById('sel-month');
         const curY = new Date().getFullYear();
-        for(let i=curY-2; i<=curY+2; i++) ys.add(new Option(i+'年', i));
+        for(let i=curY-1; i<=curY+1; i++) ys.add(new Option(i+'年', i));
         for(let i=0; i<12; i++) ms.add(new Option((i+1)+'月', i));
-        ys.value = viewDate.getFullYear();
-        ms.value = viewDate.getMonth();
+        ys.value = viewDate.getFullYear(); ms.value = viewDate.getMonth();
     }
 
     function changeMonth(d) { viewDate.setMonth(viewDate.getMonth() + d); syncSelectors(); renderCalendar(); }
@@ -303,24 +289,19 @@
     function renderCalendar() {
         const y = viewDate.getFullYear(), m = viewDate.getMonth();
         document.getElementById('month-title').innerText = `${y}年${m+1}月`;
-        const grid = document.getElementById('calendar-grid');
-        grid.innerHTML = '';
+        const grid = document.getElementById('calendar-grid'); grid.innerHTML = '';
         ['日','一','二','三','四','五','六'].forEach(w => grid.innerHTML += `<div class="day-header">${w}</div>`);
-        
         const firstDay = new Date(y, m, 1).getDay();
         const days = new Date(y, m+1, 0).getDate();
         for(let i=0; i<firstDay; i++) grid.innerHTML += `<div></div>`;
-
         const today = fmtDate(new Date());
         for(let i=1; i<=days; i++) {
             const dStr = fmtDate(new Date(y, m, i));
             const cell = document.createElement('div');
             cell.className = `day-cell ${dStr === today ? 'today' : ''}`;
-            
             let count = 0;
             if(db_cache[dStr]) db_cache[dStr].forEach(p => SIZES.forEach(s => count += (p.sizes[s].s || 0)));
-            
-            cell.innerHTML = `<span class="num">${i}</span>${count > 0 ? `<span class="badge">发:${count}</span>` : ''}`;
+            cell.innerHTML = `<span class="num">${i}</span>${count > 0 ? `<span class="badge">${count}</span>` : ''}`;
             cell.onclick = () => openDateList(dStr);
             grid.appendChild(cell);
         }
@@ -330,13 +311,13 @@
         let s = 0, r = 0;
         if(db_cache[dStr]) db_cache[dStr].forEach(p => SIZES.forEach(sz => { s += p.sizes[sz].s; r += p.sizes[sz].r; }));
         document.getElementById('stat-content').innerHTML = `
-            <span style="font-size:14px; color:#666">${dStr}</span><br>
-            <span style="color:var(--primary); font-size:24px; font-weight:bold;">${s}</span> 发货 | 
-            <span style="color:var(--danger); font-size:24px; font-weight:bold;">${r}</span> 退货
+            <div style="font-size:12px; color:#888; margin-bottom:4px;">${dStr} 统计</div>
+            <span style="color:var(--primary); font-size:20px; font-weight:bold;">${s}</span> <small>发货</small> | 
+            <span style="color:var(--danger); font-size:20px; font-weight:bold;">${r}</span> <small>退货</small>
         `;
     }
 
-    /* --- 列表逻辑 --- */
+    /* --- 列表部分 --- */
     function openDateList(dStr) {
         activeDateStr = dStr;
         document.getElementById('list-date-label').innerText = dStr;
@@ -349,9 +330,8 @@
         const container = document.getElementById('product-list-container');
         container.innerHTML = '';
         const list = db_cache[activeDateStr] || [];
-        
         if(list.length === 0) {
-            container.innerHTML = `<div style="text-align:center; color:#bbb; padding-top:50px;">今日空空如也，点击右上角新增</div>`;
+            container.innerHTML = `<div style="text-align:center; color:#bbb; padding-top:100px;">暂无记录</div>`;
             return;
         }
 
@@ -359,10 +339,10 @@
             const groups = {};
             list.forEach(p => { const src = p.source || '未分类'; if(!groups[src]) groups[src] = []; groups[src].push(p); });
             for(let src in groups) {
-                const head = document.createElement('div');
-                head.style = "padding:10px; font-weight:bold; background:#eee; border-radius:5px; margin:10px 0;";
-                head.innerText = `货源: ${src}`;
-                container.appendChild(head);
+                const h = document.createElement('div');
+                h.style = "padding:6px 12px; font-size:13px; font-weight:bold; background:#e9ecef; border-radius:4px; margin:10px 0 5px 0;";
+                h.innerText = `货源: ${src}`;
+                container.appendChild(h);
                 groups[src].forEach(p => container.appendChild(createItemCard(p)));
             }
         } else {
@@ -378,26 +358,34 @@
         SIZES.forEach(s => { sSum += p.sizes[s].s; rSum += p.sizes[s].r; });
 
         card.innerHTML = `
-            <input type="checkbox" class="item-sel" value="${p.id}" style="margin-top:5px">
-            <img src="${p.img}" class="item-img">
-            <div class="item-info">
-                <div class="item-inputs">
-                    <input type="number" value="${p.price}" placeholder="价格" onchange="updateInfo('${p.id}','price',this.value)">
+            <div class="item-left">
+                <input type="checkbox" class="item-sel" value="${p.id}">
+                <img src="${p.img}" class="item-img" onclick="previewImg('${p.img}')">
+                <div class="item-meta-info">
+                    <input type="text" value="${p.price}" placeholder="价格" onchange="updateInfo('${p.id}','price',this.value)">
                     <input type="text" value="${p.source}" placeholder="货源" onchange="updateInfo('${p.id}','source',this.value)">
                 </div>
-                <div class="size-grid">
+            </div>
+            <div class="item-middle">
+                <div class="size-grid-container">
                     ${SIZES.map(s => `
-                        <div class="size-item">
-                            <div>${s}</div>
+                        <div class="size-box">
+                            <span class="size-label">${s}</span>
                             <input type="number" value="${p.sizes[s].s || ''}" placeholder="发" onchange="updateQty('${p.id}','${s}','s',this.value)">
-                            <input type="number" value="${p.sizes[s].r || ''}" placeholder="退" onchange="updateQty('${p.id}','${s}','r',this.value)">
+                            <input type="number" class="ret-input" value="${p.sizes[s].r || ''}" placeholder="退" onchange="updateQty('${p.id}','${s}','r',this.value)">
                         </div>
                     `).join('')}
                 </div>
             </div>
-            <div class="item-summary">
-                <div class="sum-box"><span class="label">发</span><span class="val ship">${sSum}</span></div>
-                <div class="sum-box"><span class="label">退</span><span class="val ret">${rSum}</span></div>
+            <div class="item-right">
+                <div class="summary-unit">
+                    <span class="lab">发货</span>
+                    <span class="val s">${sSum}</span>
+                </div>
+                <div class="summary-unit">
+                    <span class="lab">退货</span>
+                    <span class="val r">${rSum}</span>
+                </div>
             </div>
         `;
         return card;
@@ -418,13 +406,13 @@
     function deleteSelected() {
         const ids = Array.from(document.querySelectorAll('.item-sel:checked')).map(el => el.value);
         if(ids.length === 0) return;
-        if(confirm(`确定删除选中的 ${ids.length} 项吗?`)) {
+        if(confirm(`确定删除这 ${ids.length} 项吗?`)) {
             db_cache[activeDateStr] = db_cache[activeDateStr].filter(p => !ids.includes(p.id));
             persist(); renderList();
         }
     }
 
-    /* --- 新增弹窗逻辑 --- */
+    /* --- 弹窗逻辑 --- */
     function openAddModal() {
         selectedImgBase64 = '';
         document.getElementById('img-preview').style.display = 'none';
@@ -443,22 +431,17 @@
         histDiv.innerHTML = ''; opts.innerHTML = '';
         const history = [];
         const sources = new Set();
-
         for(let d in db_cache) {
             db_cache[d].forEach(p => {
                 sources.add(p.source);
-                if(!history.find(h => h.img === p.img)) {
-                    history.push({ img: p.img, price: p.price, source: p.source });
-                }
+                if(!history.find(h => h.img === p.img)) history.push({ img: p.img, price: p.price, source: p.source });
             });
         }
         sources.forEach(s => opts.innerHTML += `<option value="${s}">`);
-        
-        if(history.length === 0) histDiv.innerHTML = '<span style="color:#ccc; font-size:12px;">暂无历史记录</span>';
-        history.reverse().slice(0, 10).forEach(h => {
+        history.reverse().slice(0, 12).forEach(h => {
             const div = document.createElement('div');
             div.className = 'hist-card';
-            div.innerHTML = `<img src="${h.img}"><div style="font-size:10px; color:#888;">${h.source}</div>`;
+            div.innerHTML = `<img src="${h.img}"><div style="font-size:9px; color:#888; overflow:hidden; white-space:nowrap;">${h.source}</div>`;
             div.onclick = () => {
                 document.querySelectorAll('.hist-card').forEach(c => c.classList.remove('selected'));
                 div.classList.add('selected');
@@ -479,16 +462,14 @@
             img.onload = function() {
                 const canvas = document.createElement('canvas');
                 const ctx = canvas.getContext('2d');
-                const max = 300;
+                const max = 400;
                 let w = img.width, h = img.height;
                 if(w > h) { if(w > max) { h *= max/w; w = max; } } else { if(h > max) { w *= max/h; h = max; } }
                 canvas.width = w; canvas.height = h;
                 ctx.drawImage(img, 0, 0, w, h);
-                selectedImgBase64 = canvas.toDataURL('image/jpeg', 0.6);
+                selectedImgBase64 = canvas.toDataURL('image/jpeg', 0.7);
                 const prev = document.getElementById('img-preview');
-                prev.src = selectedImgBase64;
-                prev.style.display = 'block';
-                document.querySelectorAll('.hist-card').forEach(c => c.classList.remove('selected'));
+                prev.src = selectedImgBase64; prev.style.display = 'block';
             };
             img.src = ev.target.result;
         };
@@ -496,24 +477,23 @@
     };
 
     function handleSave() {
-        if(!selectedImgBase64) return alert("请上传或选择图片");
-        const price = document.getElementById('form-price').value;
-        const source = document.getElementById('form-source').value;
-        
+        if(!selectedImgBase64) return alert("请选图片");
         if(!db_cache[activeDateStr]) db_cache[activeDateStr] = [];
         const newProduct = {
             id: Date.now().toString(36),
             img: selectedImgBase64,
-            price: price,
-            source: source,
+            price: document.getElementById('form-price').value,
+            source: document.getElementById('form-source').value,
             sizes: {}
         };
         SIZES.forEach(s => newProduct.sizes[s] = { s:0, r:0 });
-        
         db_cache[activeDateStr].push(newProduct);
-        persist();
-        closeModal();
-        renderList();
+        persist(); closeModal(); renderList();
+    }
+
+    function previewImg(src) {
+        const win = window.open();
+        win.document.write(`<img src="${src}" style="width:100%">`);
     }
 </script>
 </body>
