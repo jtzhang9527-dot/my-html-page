@@ -1,361 +1,492 @@
-
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>档口货源管家 v3.2</title>
-    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/dexie@3.2.4/dist/dexie.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>发货单管理系统 (大容量版)</title>
     <style>
-        [v-cloak] { display: none; }
-        /* 防止iOS输入框自动放大 */
-        input, select, textarea { font-size: 16px !important; }
-        .product-card:hover .delete-btn { opacity: 1; }
-        /* 移动端特殊处理：删除按钮始终可见 */
-        @media (max-width: 768px) {
-            .delete-btn { opacity: 1 !important; background: rgba(255,255,255,0.9); }
+        :root {
+            --primary: #4361ee;
+            --danger: #ef233c;
+            --bg: #f8f9fa;
+            --text: #2b2d42;
+            --border: #dee2e6;
         }
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+        body { background-color: var(--bg); color: var(--text); }
+        .page { display: none; min-height: 100vh; padding: 20px; }
+        .page.active { display: block; }
+
+        /* 按钮与通用样式 */
+        button { background: var(--primary); color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; font-size: 14px; }
+        button:active { opacity: 0.8; }
+        button.danger { background: var(--danger); }
+        button.secondary { background: #6c757d; }
+        input[type="text"], input[type="number"] { padding: 8px; border: 1px solid var(--border); border-radius: 4px; width: 100%; }
+
+        /* 首页 */
+        #page-home { display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 30px; }
+        #btn-enter { font-size: 24px; padding: 20px 40px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: 0.3s;}
+        #btn-enter:disabled { background: #ccc; cursor: not-allowed; }
+        .reset-btn { background: transparent; color: #ef233c; border: 1px solid #ef233c; font-size: 12px; }
+
+        /* 日期页 */
+        .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; margin-bottom: 20px; }
+        .day-cell { background: white; padding: 15px 5px; text-align: center; border-radius: 5px; border: 1px solid var(--border); cursor: pointer; font-size: 14px; position: relative;}
+        .day-cell.today { background: #ffd166; font-weight: bold; border-color: #ffb703; box-shadow: 0 0 10px rgba(255, 209, 102, 0.5); }
+        .day-cell:active { background: var(--border); }
+        .day-header { text-align: center; font-weight: bold; padding: 5px; }
+        .daily-stats { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); text-align: center; font-size: 18px; }
+
+        /* 列表页 */
+        .toolbar { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; position: sticky; top: 0; background: var(--bg); padding: 10px 0; z-index: 10; border-bottom: 1px solid var(--border); }
+        .product-list { display: flex; flex-direction: column; gap: 15px; }
+        
+        .product-item { background: white; border-radius: 8px; padding: 15px; display: flex; align-items: center; gap: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .item-checkbox { flex-shrink: 0; }
+        .item-img { width: 80px; height: 80px; object-fit: cover; border-radius: 5px; border: 1px solid var(--border); flex-shrink: 0; }
+        
+        /* 弱化后的价格与货源输入 */
+        .item-meta { display: flex; flex-direction: column; justify-content: center; gap: 8px; width: 90px; flex-shrink: 0; }
+        .item-meta input { padding: 4px 6px; font-size: 12px; text-align: center; background: #f8f9fa; }
+        .item-meta input:focus { background: #fff; }
+
+        .item-sizes { display: flex; gap: 10px; flex-grow: 1; overflow-x: auto; padding-bottom: 5px; }
+        .size-box { display: flex; flex-direction: column; align-items: center; min-width: 60px; border: 1px solid var(--border); border-radius: 4px; padding: 5px; background: #fdfdfd; }
+        .size-box span { font-weight: bold; margin-bottom: 5px; font-size: 14px; }
+        .size-box input { width: 100%; padding: 4px; margin-bottom: 2px; font-size: 12px; text-align: center; }
+        
+        /* 强化后的总数显示区 */
+        .item-totals { display: flex; flex-direction: column; justify-content: center; gap: 8px; flex-shrink: 0; border-left: 1px dashed var(--border); padding-left: 15px; }
+        .total-box { display: flex; flex-direction: column; align-items: center; background: #f8f9fa; border: 1px solid var(--border); border-radius: 6px; padding: 5px 15px; min-width: 80px; }
+        .total-box .lbl { font-size: 11px; color: #666; margin-bottom: 2px; }
+        .total-box .val-ship { font-size: 22px; font-weight: 900; color: var(--primary); line-height: 1; }
+        .total-box .val-ret { font-size: 22px; font-weight: 900; color: var(--danger); line-height: 1; }
+        
+        .group-header { background: #e9ecef; padding: 10px; font-weight: bold; border-radius: 5px; margin-top: 10px; }
+
+        /* 弹窗 */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 100; justify-content: center; align-items: center; }
+        .modal.active { display: flex; }
+        .modal-content { background: white; padding: 20px; border-radius: 8px; width: 90%; max-width: 500px; max-height: 90vh; overflow-y: auto; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
+        
+        /* 历史记录选择器 */
+        .history-list { display: flex; overflow-x: auto; gap: 10px; padding: 10px 0; border-top: 1px solid var(--border); margin-top: 10px;}
+        .history-item { cursor: pointer; border: 2px solid transparent; border-radius: 5px; text-align: center; min-width: 80px; }
+        .history-item img { width: 60px; height: 60px; object-fit: cover; border-radius: 4px; }
+        .history-item.selected { border-color: var(--primary); }
+        .history-badge { font-size: 10px; background: var(--primary); color: white; padding: 2px 5px; border-radius: 10px; }
+
+        /* 手机端适配 */
+        @media (max-width: 768px) {
+            .product-item { flex-wrap: wrap; align-items: flex-start; }
+            .item-meta { flex-direction: row; width: auto; flex-grow: 1; }
+            .item-meta input { flex: 1; }
+            .item-sizes { width: 100%; order: 4; } /* 尺码排到下一行 */
+            .item-totals { flex-direction: row; width: 100%; order: 5; border-left: none; border-top: 1px dashed var(--border); padding-left: 0; padding-top: 10px; justify-content: space-around; }
+            .total-box { flex: 1; margin: 0 5px; }
+        }
     </style>
 </head>
-<body class="bg-gray-50 text-slate-900 font-sans selection:bg-blue-100">
-    <div id="app" v-cloak class="min-h-screen flex flex-col">
-        
-        <!-- 顶部导航 -->
-        <header class="bg-white border-b px-4 md:px-6 py-3 flex justify-between items-center sticky top-0 z-50 shadow-sm">
-            <div class="flex items-center space-x-2 cursor-pointer" @click="goHome">
-                <div class="bg-blue-600 text-white p-1.5 rounded-lg text-lg">📦</div>
-                <h1 class="text-lg font-bold tracking-tight">货源管理</h1>
-            </div>
-            <div class="flex items-center space-x-2">
-                <button @click="exportData" class="text-xs font-medium text-slate-600 px-2 py-2">导出</button>
-                <label class="text-xs bg-slate-900 text-white px-3 py-2 rounded-full cursor-pointer">
-                    导入 <input type="file" class="hidden" @change="importData" accept=".json">
-                </label>
-            </div>
-        </header>
+<body>
 
-        <main class="flex-1 max-w-6xl w-full mx-auto p-4 md:p-6">
-            
-            <!-- 1. 首页按钮 -->
-            <div v-if="view === 'home'" class="flex flex-col md:flex-row items-center justify-center space-y-6 md:space-y-0 md:space-x-8 py-10 md:h-[70vh]">
-                <button @click="view = 'stalls'" class="w-full max-w-xs md:w-64 h-48 md:h-64 bg-white rounded-3xl shadow-lg border border-gray-100 flex flex-col items-center justify-center hover:scale-105 transition-all group">
-                    <span class="text-5xl mb-4">🏪</span>
-                    <span class="text-xl font-bold">档口管理</span>
-                    <p class="text-gray-400 text-sm mt-2">点击增删改档口</p>
-                </button>
-                <button @click="view = 'all_products'" class="w-full max-w-xs md:w-64 h-48 md:h-64 bg-white rounded-3xl shadow-lg border border-gray-100 flex flex-col items-center justify-center hover:scale-105 transition-all group">
-                    <span class="text-5xl mb-4">👕</span>
-                    <span class="text-xl font-bold">全库查询</span>
-                    <p class="text-gray-400 text-sm mt-2">查看所有货物对应</p>
-                </button>
-            </div>
-
-            <!-- 2. 档口管理列表 -->
-            <div v-if="view === 'stalls'" class="space-y-6">
-                <!-- 返回与操作栏 -->
-                <div class="flex items-center justify-between">
-                    <button @click="view = 'home'" class="flex items-center text-blue-600 font-bold px-3 py-2 bg-blue-50 rounded-xl">
-                        <span class="mr-1">←</span> 返回首页
-                    </button>
-                    <button v-if="!showStallForm" @click="openStallForm()" class="bg-blue-600 text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-blue-200 shadow-lg">
-                        + 新增档口
-                    </button>
-                </div>
-
-                <!-- 档口表单 -->
-                <div v-if="showStallForm" class="bg-white border-2 border-blue-100 p-5 rounded-3xl shadow-sm">
-                    <h3 class="text-lg font-bold mb-4">{{ stallForm.id ? '修改档口' : '创建新档口' }}</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <input v-model="stallForm.name" type="text" placeholder="档口名称 (必填)" class="border p-3 rounded-xl bg-gray-50 outline-none focus:ring-2 ring-blue-500">
-                        <input v-model="stallForm.phone" type="text" placeholder="联系电话" class="border p-3 rounded-xl bg-gray-50 outline-none focus:ring-2 ring-blue-500">
-                        <input v-model="stallForm.remark" type="text" placeholder="备注信息" class="border p-3 rounded-xl bg-gray-50 outline-none focus:ring-2 ring-blue-500">
-                    </div>
-                    <div class="flex justify-end mt-4 space-x-3">
-                        <button @click="showStallForm = false" class="px-6 py-2 text-gray-500 font-bold">取消</button>
-                        <button @click="saveStall" class="bg-blue-600 text-white px-8 py-2 rounded-xl font-bold">保存</button>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <div v-for="item in stalls" :key="item.id" class="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm">
-                        <div class="flex justify-between items-start mb-3">
-                            <div class="flex-1 min-w-0" @click="enterStall(item)">
-                                <h4 class="text-lg font-bold text-gray-800 truncate">{{ item.name }}</h4>
-                                <p class="text-blue-600 text-sm mt-1">{{ item.phone || '无电话' }}</p>
-                            </div>
-                            <div class="flex space-x-3 ml-2">
-                                <button @click="openStallForm(item)" class="text-blue-500 text-xs font-bold">编辑</button>
-                                <button @click="deleteStall(item.id)" class="text-red-400 text-xs font-bold">删除</button>
-                            </div>
-                        </div>
-                        <p class="text-gray-400 text-xs mb-4 truncate">{{ item.remark || '暂无备注' }}</p>
-                        <button @click="enterStall(item)" class="w-full bg-blue-50 text-blue-700 py-3.5 rounded-2xl font-bold hover:bg-blue-100 transition">
-                            查看货物 ({{ getCount(item.id) }})
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 3. 具体档口详情 -->
-            <div v-if="view === 'stall_detail'" class="space-y-6">
-                <!-- 返回按钮 -->
-                <div class="flex items-center justify-between">
-                    <button @click="view = 'stalls'" class="flex items-center text-blue-600 font-bold px-3 py-2 bg-blue-50 rounded-xl">
-                        <span class="mr-1">←</span> 返回列表
-                    </button>
-                    <div class="flex-1 text-right ml-4">
-                        <h2 class="text-lg font-black truncate">{{ currentStall.name }}</h2>
-                    </div>
-                </div>
-
-                <!-- 录入面板 -->
-                <div class="bg-white p-4 md:p-6 rounded-[2rem] shadow-xl border border-gray-50">
-                    <div class="flex flex-col lg:flex-row gap-6">
-                        <!-- 上传区 -->
-                        <div class="flex flex-col space-y-3 w-full lg:w-64">
-                            <label class="text-xs font-bold text-gray-400">第一步：上传图片</label>
-                            <div class="grid grid-cols-2 lg:grid-cols-1 gap-3">
-                                <button @click="$refs.imgInput.click()" class="flex flex-col items-center justify-center p-5 border-2 border-dashed border-gray-200 rounded-2xl bg-gray-50 active:bg-blue-50">
-                                    <span class="text-3xl mb-1">📸</span>
-                                    <span class="text-xs font-bold text-gray-500">点击拍照</span>
-                                    <input type="file" ref="imgInput" class="hidden" @change="onFileChange" accept="image/*">
-                                </button>
-                                <div tabindex="0" @paste="onPaste" class="hidden lg:flex flex-col items-center justify-center border-2 border-dashed border-gray-200 rounded-2xl cursor-pointer p-4 focus:bg-blue-50">
-                                    <span class="text-3xl mb-1">📋</span>
-                                    <span class="text-xs font-bold text-gray-500">粘贴图片</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- 填写区 -->
-                        <div class="flex-1 flex flex-col md:flex-row gap-5 bg-gray-50 p-4 rounded-3xl">
-                            <div class="w-full md:w-40 h-40 bg-white rounded-2xl overflow-hidden border flex items-center justify-center relative shrink-0">
-                                <img v-if="newProd.image" :src="newProd.image" class="w-full h-full object-cover">
-                                <span v-else class="text-gray-300 text-xs">等待图片...</span>
-                                <button v-if="newProd.image" @click="newProd.image=''" class="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 text-xs">✕</button>
-                            </div>
-                            <div class="flex-1 space-y-4">
-                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <input v-model="newProd.name" type="text" placeholder="货物名称" class="w-full p-4 rounded-xl border-none outline-none focus:ring-2 ring-blue-500 bg-white">
-                                    <input v-model="newProd.cost" type="number" placeholder="成本价" class="w-full p-4 rounded-xl border-none outline-none focus:ring-2 ring-blue-500 bg-white">
-                                </div>
-                                <button @click="addProduct" class="w-full bg-blue-600 text-white font-bold py-4 rounded-2xl shadow-lg active:scale-95 transition">
-                                    确认录入货物
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 商品列表展示 -->
-                <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-6">
-                    <div v-for="p in stallProducts" :key="p.id" class="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 group relative product-card">
-                        <div class="relative pt-[100%]">
-                            <img :src="p.image" class="absolute inset-0 w-full h-full object-cover">
-                        </div>
-                        <div class="p-3">
-                            <input v-model="p.name" @change="updateProd(p)" class="text-xs md:text-sm font-bold w-full outline-none focus:text-blue-600 truncate" placeholder="未命名">
-                            <div class="text-red-500 font-black mt-1 flex items-center text-sm">
-                                <span>￥</span>
-                                <input v-model="p.cost" @change="updateProd(p)" class="w-full outline-none bg-transparent" placeholder="0">
-                            </div>
-                        </div>
-                        <button @click="deleteProd(p.id)" class="delete-btn absolute top-1 right-1 bg-white/90 p-2 rounded-full text-red-500 shadow-md md:opacity-0 transition">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 4. 全局商品查询 -->
-            <div v-if="view === 'all_products'" class="space-y-6">
-                <!-- 返回与搜索栏 -->
-                <div class="flex flex-col md:flex-row gap-4 md:items-center justify-between">
-                    <button @click="view = 'home'" class="flex items-center text-blue-600 font-bold px-3 py-2 bg-blue-50 rounded-xl self-start">
-                        <span class="mr-1">←</span> 返回首页
-                    </button>
-                    <input v-model="search" type="text" placeholder="输入名称搜索..." class="px-5 py-3 border rounded-full outline-none focus:ring-2 ring-blue-500 w-full md:w-64 bg-white shadow-sm">
-                </div>
-
-                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
-                    <div v-for="p in filteredProducts" :key="p.id" class="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-50 flex flex-col">
-                        <div class="relative pt-[100%]">
-                             <img :src="p.image" class="absolute inset-0 w-full h-full object-cover">
-                        </div>
-                        <div class="p-2.5">
-                            <div class="text-[9px] text-blue-600 font-bold bg-blue-50 px-1.5 py-0.5 rounded-md inline-block mb-1 truncate max-w-full">
-                                🏪 {{ getStallName(p.stallId) }}
-                            </div>
-                            <div class="text-xs font-bold truncate">{{ p.name || '未命名' }}</div>
-                            <div class="text-red-500 text-sm font-black mt-1">￥{{ p.cost || '0' }}</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-        </main>
-        
-        <!-- 底部占位 -->
-        <div class="h-10 md:hidden"></div>
+    <!-- 首页 -->
+    <div id="page-home" class="page active">
+        <h2 style="color: var(--primary);">系统启动中...</h2>
+        <button id="btn-enter" disabled>发货单 (请稍候)</button>
+        <button class="reset-btn" onclick="clearAllData()">⚠️ 彻底清理并恢复出厂设置</button>
     </div>
 
-    <script>
-        const { createApp, ref, computed, onMounted } = Vue;
+    <!-- 日期选择页 -->
+    <div id="page-calendar" class="page">
+        <div class="calendar-header">
+            <button onclick="changeMonth(-1)">上个月</button>
+            <h2 id="current-month-year">加载中...</h2>
+            <button onclick="changeMonth(1)">下个月</button>
+        </div>
+        <div style="display: flex; gap: 5px; margin-bottom: 10px; justify-content: center;">
+            <select id="year-select" onchange="jumpToDate()"></select>
+            <select id="month-select" onchange="jumpToDate()"></select>
+            <button onclick="goToday()">回到今天</button>
+        </div>
+        <div class="calendar-grid" id="calendar-grid"></div>
+        <div class="daily-stats" id="daily-stats">请选择日期查看数据</div>
+        <button class="secondary" onclick="showPage('page-home')" style="margin-top: 20px; width: 100%;">返回主页</button>
+    </div>
 
-        const db = new Dexie("EcomStallDB");
-        db.version(1).stores({
-            stalls: 'id, name, phone, remark',
-            products: '++id, stallId, name, cost'
-        });
+    <!-- 发货单列表页 -->
+    <div id="page-list" class="page">
+        <div class="toolbar">
+            <button onclick="showPage('page-calendar')" class="secondary">返回日期</button>
+            <h3 id="list-date-title" style="line-height: 40px; margin: 0 10px;"></h3>
+            <button onclick="openAddModal()">+ 新增货物</button>
+            <button onclick="deleteSelected()" class="danger">删除选中</button>
+            <button onclick="toggleCategorize()">分类显示 (按货源)</button>
+            <label style="display: flex; align-items: center; gap: 5px;">
+                <input type="checkbox" id="select-all" onclick="toggleSelectAll()"> 全选
+            </label>
+        </div>
+        <div class="product-list" id="product-list"></div>
+    </div>
 
-        createApp({
-            setup() {
-                const view = ref('home');
-                const stalls = ref([]);
-                const products = ref([]);
-                const search = ref('');
-                const showStallForm = ref(false);
-                const stallForm = ref({ id: null, name: '', phone: '', remark: '' });
-                const currentStall = ref(null);
-                const newProd = ref({ name: '', cost: '', image: '', stallId: null });
+    <!-- 新增/编辑弹窗 -->
+    <div id="add-modal" class="modal">
+        <div class="modal-content">
+            <h3 id="modal-title">新增货物信息</h3>
+            <div style="margin-top: 15px;">
+                <h4>从历史记录选择 (按发货量排序)</h4>
+                <div class="history-list" id="history-list"></div>
+            </div>
+            
+            <div class="form-group" style="margin-top: 15px;">
+                <label>自行上传图片</label>
+                <input type="file" id="upload-image" accept="image/*">
+                <img id="preview-image" style="width: 100px; height: 100px; object-fit: cover; margin-top: 10px; display: none; border-radius: 5px;">
+            </div>
+            
+            <div class="form-group">
+                <label>价格</label>
+                <input type="number" id="input-price" placeholder="请输入价格">
+            </div>
+            
+            <div class="form-group">
+                <label>货源</label>
+                <input type="text" id="input-source" list="source-list" placeholder="输入或选择货源">
+                <datalist id="source-list"></datalist>
+            </div>
+            
+            <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                <button class="secondary" onclick="closeModal()">取消</button>
+                <button onclick="saveProduct()">保存</button>
+            </div>
+        </div>
+    </div>
 
-                const load = async () => {
-                    stalls.value = await db.stalls.toArray();
-                    products.value = await db.products.toArray();
-                };
+<script>
+    /* ==========================================
+       核心升级：大容量数据库 IndexedDB 引擎
+    ========================================== */
+    const DB_NAME = 'ShippingSuperDB';
+    const STORE_NAME = 'ShipStore';
+    let db = {}; // 内存中的数据缓存
 
-                onMounted(load);
-
-                const stallProducts = computed(() => {
-                    return products.value.filter(p => p.stallId === currentStall.value?.id).reverse();
-                });
-
-                const filteredProducts = computed(() => {
-                    if (!search.value) return [...products.value].reverse();
-                    return products.value.filter(p => (p.name || '').includes(search.value)).reverse();
-                });
-
-                const openStallForm = (item = null) => {
-                    stallForm.value = item ? { ...item } : { id: null, name: '', phone: '', remark: '' };
-                    showStallForm.value = true;
-                };
-
-                const saveStall = async () => {
-                    if (!stallForm.value.name) return alert("档口名不能为空");
-                    const data = { ...stallForm.value };
-                    if (!data.id) data.id = Date.now();
-                    await db.stalls.put(data);
-                    showStallForm.value = false;
-                    await load();
-                };
-
-                const deleteStall = async (id) => {
-                    if (confirm("删除档口将同时删除所有商品，确定吗？")) {
-                        await db.stalls.delete(id);
-                        await db.products.where('stallId').equals(id).delete();
-                        await load();
-                    }
-                };
-
-                const enterStall = (item) => {
-                    currentStall.value = item;
-                    view.value = 'stall_detail';
-                    newProd.value = { name: '', cost: '', image: '', stallId: item.id };
-                };
-
-                const processImg = (file) => {
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
-                        const img = new Image();
-                        img.onload = () => {
-                            const canvas = document.createElement('canvas');
-                            let w = img.width, h = img.height;
-                            const max = 1000;
-                            if (w > max || h > max) {
-                                if (w > h) { h = (max/w)*h; w = max; }
-                                else { w = (max/h)*w; h = max; }
-                            }
-                            canvas.width = w; canvas.height = h;
-                            canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-                            newProd.value.image = canvas.toDataURL('image/jpeg', 0.8);
-                        };
-                        img.src = e.target.result;
-                    };
-                    reader.readAsDataURL(file);
-                };
-
-                const onFileChange = (e) => {
-                    const file = e.target.files[0];
-                    if (file) processImg(file);
-                };
-
-                const onPaste = (e) => {
-                    const items = (e.clipboardData || e.originalEvent.clipboardData).items;
-                    for (let item of items) {
-                        if (item.type.indexOf("image") !== -1) processImg(item.getAsFile());
-                    }
-                };
-
-                const addProduct = async () => {
-                    if (!newProd.value.image) return alert("请先上传/拍摄图片");
-                    await db.products.add({ ...newProd.value });
-                    newProd.value = { name: '', cost: '', image: '', stallId: currentStall.value.id };
-                    await load();
-                };
-
-                const updateProd = async (p) => await db.products.put(JSON.parse(JSON.stringify(p)));
-                const deleteProd = async (id) => { if(confirm("确定删除商品？")) { await db.products.delete(id); await load(); } };
-
-                const goHome = () => { view.value = 'home'; showStallForm.value = false; };
-                const getCount = (sid) => products.value.filter(p => p.stallId === sid).length;
-                const getStallName = (sid) => stalls.value.find(s => s.id === sid)?.name || '未知';
-
-                const exportData = async () => {
-                    const data = {
-                        app: "STALL_MANAGER_PRO",
-                        stalls: await db.stalls.toArray(),
-                        products: await db.products.toArray(),
-                        time: Date.now()
-                    };
-                    const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
-                    const a = document.createElement('a');
-                    a.href = URL.createObjectURL(blob);
-                    a.download = `档口数据备份_${new Date().toLocaleDateString()}.json`;
-                    a.click();
-                };
-
-                const importData = (e) => {
-                    const file = e.target.files[0];
-                    const reader = new FileReader();
-                    reader.onload = async (f) => {
-                        try {
-                            const data = JSON.parse(f.target.result);
-                            if (data.app !== "STALL_MANAGER_PRO") throw "无效文件";
-                            if (confirm("这将覆盖现有数据，确定？")) {
-                                await db.stalls.clear(); await db.products.clear();
-                                await db.stalls.bulkAdd(data.stalls);
-                                await db.products.bulkAdd(data.products);
-                                await load();
-                                alert("导入成功");
-                            }
-                        } catch (err) { alert("导入失败，文件格式不正确"); }
-                    };
-                    reader.readAsText(file);
-                };
-
-                return {
-                    view, stalls, products, search, showStallForm, stallForm, currentStall, newProd,
-                    stallProducts, filteredProducts,
-                    openStallForm, saveStall, deleteStall, enterStall,
-                    onFileChange, onPaste, addProduct, updateProd, deleteProd,
-                    goHome, getCount, getStallName, exportData, importData
+    // 初始化数据库
+    function initDB() {
+        return new Promise((resolve, reject) => {
+            const request = indexedDB.open(DB_NAME, 1);
+            request.onupgradeneeded = (e) => {
+                const idb = e.target.result;
+                if (!idb.objectStoreNames.contains(STORE_NAME)) {
+                    idb.createObjectStore(STORE_NAME);
                 }
+            };
+            request.onsuccess = (e) => resolve(e.target.result);
+            request.onerror = (e) => reject('数据库打开失败');
+        });
+    }
+
+    // 从数据库加载数据
+    async function loadDataFromDB() {
+        try {
+            const idb = await initDB();
+            return new Promise((resolve) => {
+                const tx = idb.transaction(STORE_NAME, 'readonly');
+                const store = tx.objectStore(STORE_NAME);
+                const req = store.get('ALL_DATA');
+                req.onsuccess = () => resolve(req.result || {});
+                req.onerror = () => resolve({});
+            });
+        } catch (e) {
+            console.error(e); return {};
+        }
+    }
+
+    // 异步保存数据到数据库 (无视5MB限制)
+    async function saveData() {
+        try {
+            const idb = await initDB();
+            const tx = idb.transaction(STORE_NAME, 'readwrite');
+            const store = tx.objectStore(STORE_NAME);
+            store.put(db, 'ALL_DATA');
+        } catch (e) {
+            console.error("保存失败:", e);
+        }
+    }
+
+    // 彻底清理所有数据（同时清理旧的localStorage和新的IndexedDB）
+    function clearAllData() {
+        if(confirm("确定要彻底清理吗？\n这将删除所有日期的记录和图片，系统将完全重置！")) {
+            localStorage.clear(); 
+            indexedDB.deleteDatabase(DB_NAME); 
+            alert("清理成功！系统已完全重置。");
+            location.reload(); 
+        }
+    }
+
+    /* ==========================================
+       系统业务逻辑
+    ========================================== */
+    const sizes = ['S', 'M', 'L', 'XL', '2XL', '3XL', '4XL'];
+    let currentDate = new Date();
+    let selectedDateStr = '';
+    let isCategorized = false;
+    let selectedImageBase64 = '';
+
+    // 系统启动入口
+    window.onload = async () => {
+        db = await loadDataFromDB(); 
+        document.querySelector('#page-home h2').style.display = 'none';
+        const btn = document.getElementById('btn-enter');
+        btn.innerText = '进入发货单';
+        btn.disabled = false;
+    };
+
+    document.getElementById('btn-enter').addEventListener('click', () => {
+        showPage('page-calendar');
+        initCalendarControls();
+        renderCalendar();
+    });
+
+    // 控制页面显示，并加入强制置顶防止下滑
+    function showPage(pageId) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById(pageId).classList.add('active');
+        
+        // 关键修复：页面切换时，强制浏览器滚动条回到最顶端
+        window.scrollTo(0, 0); 
+
+        if(pageId === 'page-calendar') {
+            updateDailyStats(formatDateStr(currentDate));
+            isCategorized = false; 
+        }
+    }
+
+    function initCalendarControls() {
+        const yearSel = document.getElementById('year-select');
+        const monthSel = document.getElementById('month-select');
+        yearSel.innerHTML = ''; monthSel.innerHTML = '';
+        const currentYear = new Date().getFullYear();
+        for(let i = currentYear - 2; i <= currentYear + 2; i++) yearSel.add(new Option(i + '年', i));
+        for(let i = 0; i < 12; i++) monthSel.add(new Option((i+1) + '月', i));
+        yearSel.value = currentDate.getFullYear();
+        monthSel.value = currentDate.getMonth();
+    }
+
+    function changeMonth(delta) { currentDate.setMonth(currentDate.getMonth() + delta); initCalendarControls(); renderCalendar(); }
+    function jumpToDate() { currentDate.setFullYear(document.getElementById('year-select').value); currentDate.setMonth(document.getElementById('month-select').value); renderCalendar(); }
+    function goToday() { currentDate = new Date(); initCalendarControls(); renderCalendar(); }
+    function formatDateStr(date) { return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`; }
+
+    function renderCalendar() {
+        const y = currentDate.getFullYear(), m = currentDate.getMonth();
+        document.getElementById('current-month-year').innerText = `${y}年${m+1}月`;
+        const firstDay = new Date(y, m, 1).getDay(), daysInMonth = new Date(y, m + 1, 0).getDate();
+        const grid = document.getElementById('calendar-grid');
+        grid.innerHTML = '';
+        ['日', '一', '二', '三', '四', '五', '六'].forEach(n => grid.innerHTML += `<div class="day-header">${n}</div>`);
+        for(let i = 0; i < firstDay; i++) grid.innerHTML += `<div></div>`;
+        const todayStr = formatDateStr(new Date());
+
+        for(let i = 1; i <= daysInMonth; i++) {
+            const dateStr = formatDateStr(new Date(y, m, i));
+            const div = document.createElement('div');
+            div.className = `day-cell ${dateStr === todayStr ? 'today' : ''}`;
+            div.innerText = i;
+            
+            let dayTotal = 0;
+            if(db[dateStr]) db[dateStr].forEach(p => sizes.forEach(s => dayTotal += p.sizes[s].s));
+            if(dayTotal > 0) div.innerHTML += `<br><span style="font-size:10px; color:var(--primary)">发:${dayTotal}</span>`;
+
+            div.onclick = () => {
+                selectedDateStr = dateStr; updateDailyStats(dateStr);
+                document.getElementById('list-date-title').innerText = `${dateStr} 发货单`;
+                renderList(); showPage('page-list');
+            };
+            grid.appendChild(div);
+        }
+    }
+
+    function updateDailyStats(dateStr) {
+        let shipTotal = 0, returnTotal = 0;
+        if(db[dateStr]) db[dateStr].forEach(p => sizes.forEach(s => { shipTotal += p.sizes[s].s; returnTotal += p.sizes[s].r; }));
+        document.getElementById('daily-stats').innerHTML = `<b>${dateStr}</b> 统计<br>总发货量: <span style="color:var(--primary); font-size:24px">${shipTotal}</span> | 总退货量: <span style="color:var(--danger); font-size:24px">${returnTotal}</span>`;
+    }
+
+    function generateId() { return Math.random().toString(36).substr(2, 9); }
+    function createEmptySizes() { let obj = {}; sizes.forEach(s => obj[s] = { s: 0, r: 0 }); return obj; }
+
+    function renderList() {
+        const container = document.getElementById('product-list');
+        container.innerHTML = '';
+        let products = db[selectedDateStr] || [];
+        if(products.length === 0) { container.innerHTML = '<p style="text-align:center; color:#888;">今日暂无数据，请点击新增。</p>'; return; }
+
+        let renderQueue = [];
+        if (isCategorized) {
+            const grouped = {};
+            products.forEach(p => { const src = p.source || '未分类'; if(!grouped[src]) grouped[src] = []; grouped[src].push(p); });
+            for(let src in grouped) {
+                renderQueue.push({ type: 'header', text: `货源: ${src}` });
+                renderQueue = renderQueue.concat(grouped[src].map(p => ({type: 'item', data: p})));
             }
-        }).mount('#app');
-    </script>
+        } else {
+            renderQueue = products.map(p => ({type: 'item', data: p}));
+        }
+
+        renderQueue.forEach(row => {
+            if (row.type === 'header') {
+                const div = document.createElement('div'); div.className = 'group-header'; div.innerText = row.text; container.appendChild(div);
+            } else container.appendChild(createProductDOM(row.data));
+        });
+        document.getElementById('select-all').checked = false;
+        updateDailyStats(selectedDateStr); 
+    }
+
+    // 重构的商品卡片结构
+    function createProductDOM(product) {
+        const div = document.createElement('div'); div.className = 'product-item'; div.dataset.id = product.id;
+        let pShip = 0, pRet = 0, sizesHTML = '';
+        sizes.forEach(s => { 
+            pShip += product.sizes[s].s; pRet += product.sizes[s].r; 
+            sizesHTML += `<div class="size-box"><span>${s}</span>
+                <input type="number" placeholder="发" value="${product.sizes[s].s || ''}" onchange="updateQty('${product.id}', '${s}', 's', this.value)">
+                <input type="number" placeholder="退" value="${product.sizes[s].r || ''}" onchange="updateQty('${product.id}', '${s}', 'r', this.value)"></div>`;
+        });
+        
+        div.innerHTML = `
+            <div class="item-checkbox"><input type="checkbox" class="row-check" value="${product.id}"></div>
+            <img src="${product.img || 'https://via.placeholder.com/80'}" class="item-img">
+            
+            <!-- 弱化：小巧的价格和货源输入框 -->
+            <div class="item-meta">
+                <input type="number" placeholder="价格(元)" title="价格" value="${product.price}" onchange="updateInfo('${product.id}', 'price', this.value)">
+                <input type="text" placeholder="货源地" title="货源" value="${product.source}" onchange="updateInfo('${product.id}', 'source', this.value)">
+            </div>
+            
+            <!-- 尺码输入区 -->
+            <div class="item-sizes">${sizesHTML}</div>
+            
+            <!-- 强化：突出的总发与总退显示板 -->
+            <div class="item-totals">
+                <div class="total-box">
+                    <span class="lbl">总发数</span>
+                    <span class="val-ship">${pShip}</span>
+                </div>
+                <div class="total-box">
+                    <span class="lbl">总退数</span>
+                    <span class="val-ret">${pRet}</span>
+                </div>
+            </div>`;
+        return div;
+    }
+
+    function updateQty(id, size, type, val) {
+        const v = parseInt(val) || 0; const product = db[selectedDateStr].find(p => p.id === id);
+        if(product) { product.sizes[size][type] = Math.max(0, v); saveData(); renderList(); }
+    }
+
+    function updateInfo(id, field, val) {
+        const product = db[selectedDateStr].find(p => p.id === id);
+        if(product) { product[field] = val; saveData(); if(isCategorized && field === 'source') renderList(); }
+    }
+
+    function toggleSelectAll() {
+        const checked = document.getElementById('select-all').checked;
+        document.querySelectorAll('.row-check').forEach(cb => cb.checked = checked);
+    }
+
+    function deleteSelected() {
+        const checked = Array.from(document.querySelectorAll('.row-check:checked')).map(cb => cb.value);
+        if(checked.length === 0) return alert('请先勾选要删除的货物');
+        if(confirm(`确定删除这 ${checked.length} 项吗？`)) {
+            db[selectedDateStr] = db[selectedDateStr].filter(p => !checked.includes(p.id));
+            saveData(); renderList();
+        }
+    }
+
+    function toggleCategorize() { isCategorized = !isCategorized; renderList(); }
+
+    function openAddModal() {
+        selectedImageBase64 = '';
+        document.getElementById('modal-title').innerText = '新增货物';
+        document.getElementById('input-price').value = '';
+        document.getElementById('input-source').value = '';
+        document.getElementById('upload-image').value = '';
+        document.getElementById('preview-image').style.display = 'none';
+        loadHistory();
+        document.getElementById('add-modal').classList.add('active');
+    }
+
+    function closeModal() { document.getElementById('add-modal').classList.remove('active'); }
+
+    function loadHistory() {
+        const historyMap = {}; const sourceSet = new Set();
+        for(let date in db) {
+            db[date].forEach(p => {
+                if(!p.img) return;
+                const key = p.img + '_||_' + p.source; let shipTotal = 0;
+                sizes.forEach(s => shipTotal += p.sizes[s].s);
+                if(!historyMap[key]) historyMap[key] = { img: p.img, source: p.source, price: p.price, totalShip: 0 };
+                historyMap[key].totalShip += shipTotal;
+                if(p.source) sourceSet.add(p.source);
+            });
+        }
+        const dl = document.getElementById('source-list'); dl.innerHTML = '';
+        sourceSet.forEach(src => dl.innerHTML += `<option value="${src}">`);
+
+        const histArray = Object.values(historyMap).sort((a, b) => b.totalShip - a.totalShip);
+        const histContainer = document.getElementById('history-list'); histContainer.innerHTML = '';
+        if(histArray.length === 0) { histContainer.innerHTML = '<span style="font-size:12px; color:#888;">暂无历史记录</span>'; return; }
+
+        histArray.forEach(h => {
+            const div = document.createElement('div'); div.className = 'history-item';
+            div.innerHTML = `<img src="${h.img}"><div class="history-badge">发过:${h.totalShip}</div><div style="font-size:10px; margin-top:2px;">${h.source || '无货源'}</div>`;
+            div.onclick = () => {
+                document.querySelectorAll('.history-item').forEach(el => el.classList.remove('selected'));
+                div.classList.add('selected');
+                selectedImageBase64 = h.img; document.getElementById('input-price').value = h.price; document.getElementById('input-source').value = h.source;
+                document.getElementById('upload-image').value = ''; document.getElementById('preview-image').style.display = 'none';
+            };
+            histContainer.appendChild(div);
+        });
+    }
+
+    document.getElementById('upload-image').addEventListener('change', function(e) {
+        const file = e.target.files[0]; if(!file) return;
+        document.querySelectorAll('.history-item').forEach(el => el.classList.remove('selected'));
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            const img = new Image();
+            img.onload = function() {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                const MAX_WIDTH = 250, MAX_HEIGHT = 250;
+                let width = img.width, height = img.height;
+                if (width > height) { if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; } } 
+                else { if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; } }
+                canvas.width = width; canvas.height = height;
+                ctx.drawImage(img, 0, 0, width, height);
+                selectedImageBase64 = canvas.toDataURL('image/jpeg', 0.5); 
+                const preview = document.getElementById('preview-image');
+                preview.src = selectedImageBase64; preview.style.display = 'block';
+            };
+            img.src = event.target.result;
+        };
+        reader.readAsDataURL(file);
+    });
+
+    function saveProduct() {
+        const price = document.getElementById('input-price').value;
+        const source = document.getElementById('input-source').value;
+        if(!selectedImageBase64) return alert('请上传图片或从历史中选择');
+        if(!db[selectedDateStr]) db[selectedDateStr] = [];
+        db[selectedDateStr].push({ id: generateId(), img: selectedImageBase64, price: price, source: source, sizes: createEmptySizes() });
+        saveData(); closeModal(); renderList();
+        setTimeout(() => window.scrollTo(0, document.body.scrollHeight), 100);
+    }
+</script>
 </body>
 </html>
