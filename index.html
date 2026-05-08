@@ -2,8 +2,8 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>发货单管理系统 (大容量版)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>发货单管理系统专业版</title>
     <style>
         :root {
             --primary: #4361ee;
@@ -11,83 +11,124 @@
             --bg: #f8f9fa;
             --text: #2b2d42;
             --border: #dee2e6;
+            --card-bg: #ffffff;
         }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
-        body { background-color: var(--bg); color: var(--text); }
-        .page { display: none; min-height: 100vh; padding: 20px; }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, system-ui, "Segoe UI", Roboto, sans-serif; }
+        
+        body, html { 
+            background-color: var(--bg); 
+            color: var(--text); 
+            height: 100%;
+            overflow-x: hidden;
+        }
+
+        /* 页面切换核心样式 */
+        .page { 
+            display: none; 
+            min-height: 100vh; 
+            width: 100%;
+            padding: 15px;
+            animation: fadeIn 0.2s ease-in-out;
+        }
         .page.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* 按钮与通用样式 */
-        button { background: var(--primary); color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; font-size: 14px; }
-        button:active { opacity: 0.8; }
-        button.danger { background: var(--danger); }
-        button.secondary { background: #6c757d; }
-        input[type="text"], input[type="number"] { padding: 8px; border: 1px solid var(--border); border-radius: 4px; width: 100%; }
+        /* 首页样式 */
+        #page-home { 
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            text-align: center;
+        }
+        #page-home.active { display: flex; }
+        .home-logo { font-size: 60px; margin-bottom: 20px; }
+        .btn-main { 
+            background: var(--primary); 
+            color: white; 
+            border: none; 
+            padding: 18px 40px; 
+            border-radius: 50px; 
+            font-size: 20px; 
+            font-weight: bold;
+            box-shadow: 0 10px 20px rgba(67, 97, 238, 0.3);
+            transition: 0.3s;
+            cursor: pointer;
+        }
+        .btn-main:disabled { background: #ccc; box-shadow: none; }
 
-        /* 首页 */
-        #page-home { display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 30px; }
-        #btn-enter { font-size: 24px; padding: 20px 40px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: 0.3s;}
-        #btn-enter:disabled { background: #ccc; cursor: not-allowed; }
-        .reset-btn { background: transparent; color: #ef233c; border: 1px solid #ef233c; font-size: 12px; }
+        /* 通用组件 */
+        button { border: none; border-radius: 6px; padding: 10px 15px; cursor: pointer; font-size: 14px; transition: 0.2s; }
+        button:active { transform: scale(0.98); opacity: 0.9; }
+        .btn-sec { background: #6c757d; color: white; }
+        .btn-danger { background: var(--danger); color: white; }
+        input, select { padding: 8px; border: 1px solid var(--border); border-radius: 6px; outline: none; }
 
-        /* 日期页 */
-        .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; margin-bottom: 20px; }
-        .day-cell { background: white; padding: 15px 5px; text-align: center; border-radius: 5px; border: 1px solid var(--border); cursor: pointer; font-size: 14px; position: relative;}
-        .day-cell.today { background: #ffd166; font-weight: bold; border-color: #ffb703; box-shadow: 0 0 10px rgba(255, 209, 102, 0.5); }
-        .day-cell:active { background: var(--border); }
-        .day-header { text-align: center; font-weight: bold; padding: 5px; }
-        .daily-stats { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); text-align: center; font-size: 18px; }
+        /* 日历样式 */
+        .calendar-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; background: white; padding: 15px; border-radius: 10px; }
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; background: white; padding: 10px; border-radius: 10px; }
+        .day-header { text-align: center; font-weight: bold; font-size: 12px; color: #888; padding: 5px 0; }
+        .day-cell { 
+            background: #fff; border: 1px solid #f0f0f0; height: 70px; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; 
+            border-radius: 6px; cursor: pointer; position: relative;
+        }
+        .day-cell.today { background: #eef2ff; border-color: var(--primary); }
+        .day-cell .num { font-weight: bold; font-size: 16px; }
+        .day-cell .badge { font-size: 10px; color: var(--primary); margin-top: 4px; font-weight: bold; }
 
-        /* 列表页 */
-        .toolbar { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; position: sticky; top: 0; background: var(--bg); padding: 10px 0; z-index: 10; border-bottom: 1px solid var(--border); }
-        .product-list { display: flex; flex-direction: column; gap: 15px; }
-        
-        .product-item { background: white; border-radius: 8px; padding: 15px; display: flex; align-items: center; gap: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .item-checkbox { flex-shrink: 0; }
-        .item-img { width: 80px; height: 80px; object-fit: cover; border-radius: 5px; border: 1px solid var(--border); flex-shrink: 0; }
-        
-        /* 弱化后的价格与货源输入 */
-        .item-meta { display: flex; flex-direction: column; justify-content: center; gap: 8px; width: 90px; flex-shrink: 0; }
-        .item-meta input { padding: 4px 6px; font-size: 12px; text-align: center; background: #f8f9fa; }
-        .item-meta input:focus { background: #fff; }
+        /* 列表页样式 */
+        .sticky-bar { 
+            position: sticky; top: -15px; z-index: 100; 
+            background: var(--bg); padding: 10px 0; 
+            border-bottom: 1px solid var(--border);
+            display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+        }
+        .product-card { 
+            background: white; border-radius: 12px; padding: 12px; margin-bottom: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05); display: flex; gap: 12px; align-items: flex-start;
+        }
+        .item-img { width: 85px; height: 85px; object-fit: cover; border-radius: 8px; background: #eee; flex-shrink: 0; }
+        .item-info { flex: 1; min-width: 0; }
+        .item-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-bottom: 8px; }
+        .item-inputs input { font-size: 12px; padding: 4px 6px; }
 
-        .item-sizes { display: flex; gap: 10px; flex-grow: 1; overflow-x: auto; padding-bottom: 5px; }
-        .size-box { display: flex; flex-direction: column; align-items: center; min-width: 60px; border: 1px solid var(--border); border-radius: 4px; padding: 5px; background: #fdfdfd; }
-        .size-box span { font-weight: bold; margin-bottom: 5px; font-size: 14px; }
-        .size-box input { width: 100%; padding: 4px; margin-bottom: 2px; font-size: 12px; text-align: center; }
-        
-        /* 强化后的总数显示区 */
-        .item-totals { display: flex; flex-direction: column; justify-content: center; gap: 8px; flex-shrink: 0; border-left: 1px dashed var(--border); padding-left: 15px; }
-        .total-box { display: flex; flex-direction: column; align-items: center; background: #f8f9fa; border: 1px solid var(--border); border-radius: 6px; padding: 5px 15px; min-width: 80px; }
-        .total-box .lbl { font-size: 11px; color: #666; margin-bottom: 2px; }
-        .total-box .val-ship { font-size: 22px; font-weight: 900; color: var(--primary); line-height: 1; }
-        .total-box .val-ret { font-size: 22px; font-weight: 900; color: var(--danger); line-height: 1; }
-        
-        .group-header { background: #e9ecef; padding: 10px; font-weight: bold; border-radius: 5px; margin-top: 10px; }
+        .size-grid { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; }
+        .size-item { 
+            background: #f8f9fa; border: 1px solid #eee; border-radius: 6px; 
+            min-width: 55px; text-align: center; padding: 4px; flex-shrink: 0;
+        }
+        .size-item div { font-size: 11px; font-weight: bold; margin-bottom: 3px; }
+        .size-item input { width: 100%; border: none; border-bottom: 1px solid #ddd; background: transparent; text-align: center; padding: 2px 0; font-size: 13px; }
 
-        /* 弹窗 */
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 100; justify-content: center; align-items: center; }
+        .item-summary { 
+            border-left: 1px dashed #ddd; padding-left: 10px; 
+            display: flex; flex-direction: column; justify-content: center; gap: 5px;
+        }
+        .sum-box { text-align: center; min-width: 50px; }
+        .sum-box .label { font-size: 10px; color: #888; display: block; }
+        .sum-box .val { font-size: 18px; font-weight: 900; }
+        .val.ship { color: var(--primary); }
+        .val.ret { color: var(--danger); }
+
+        /* 弹窗样式 */
+        .modal { 
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center; 
+        }
         .modal.active { display: flex; }
-        .modal-content { background: white; padding: 20px; border-radius: 8px; width: 90%; max-width: 500px; max-height: 90vh; overflow-y: auto; }
-        .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
-        
-        /* 历史记录选择器 */
-        .history-list { display: flex; overflow-x: auto; gap: 10px; padding: 10px 0; border-top: 1px solid var(--border); margin-top: 10px;}
-        .history-item { cursor: pointer; border: 2px solid transparent; border-radius: 5px; text-align: center; min-width: 80px; }
-        .history-item img { width: 60px; height: 60px; object-fit: cover; border-radius: 4px; }
-        .history-item.selected { border-color: var(--primary); }
-        .history-badge { font-size: 10px; background: var(--primary); color: white; padding: 2px 5px; border-radius: 10px; }
+        .modal-content { background: white; width: 95%; max-width: 500px; border-radius: 15px; padding: 20px; max-height: 90vh; overflow-y: auto; }
+        .history-scroll { display: flex; gap: 10px; overflow-x: auto; padding: 10px 0; margin-bottom: 15px; }
+        .hist-card { border: 2px solid transparent; border-radius: 8px; text-align: center; cursor: pointer; min-width: 70px; }
+        .hist-card.selected { border-color: var(--primary); background: #f0f4ff; }
+        .hist-card img { width: 60px; height: 60px; object-fit: cover; border-radius: 4px; }
 
-        /* 手机端适配 */
-        @media (max-width: 768px) {
-            .product-item { flex-wrap: wrap; align-items: flex-start; }
-            .item-meta { flex-direction: row; width: auto; flex-grow: 1; }
-            .item-meta input { flex: 1; }
-            .item-sizes { width: 100%; order: 4; } /* 尺码排到下一行 */
-            .item-totals { flex-direction: row; width: 100%; order: 5; border-left: none; border-top: 1px dashed var(--border); padding-left: 0; padding-top: 10px; justify-content: space-around; }
-            .total-box { flex: 1; margin: 0 5px; }
+        @media (max-width: 600px) {
+            .product-card { flex-direction: column; }
+            .item-summary { border-left: none; border-top: 1px dashed #eee; padding-left: 0; padding-top: 10px; flex-direction: row; width: 100%; justify-content: space-around; }
+            .item-img { width: 60px; height: 60px; }
         }
     </style>
 </head>
@@ -95,397 +136,384 @@
 
     <!-- 首页 -->
     <div id="page-home" class="page active">
-        <h2 style="color: var(--primary);">系统启动中...</h2>
-        <button id="btn-enter" disabled>发货单 (请稍候)</button>
-        <button class="reset-btn" onclick="clearAllData()">⚠️ 彻底清理并恢复出厂设置</button>
+        <div class="home-logo">📦</div>
+        <h1 style="margin-bottom: 10px;">发货管理系统</h1>
+        <p style="color: #666; margin-bottom: 30px;">大容量 IndexedDB 存储版</p>
+        <button id="btn-enter" class="btn-main" disabled>正在初始化...</button>
+        <button onclick="clearAllData()" style="margin-top: 40px; background: none; color: #aaa; text-decoration: underline; font-size: 12px;">重置并清空所有数据</button>
     </div>
 
-    <!-- 日期选择页 -->
+    <!-- 日历页 -->
     <div id="page-calendar" class="page">
-        <div class="calendar-header">
-            <button onclick="changeMonth(-1)">上个月</button>
-            <h2 id="current-month-year">加载中...</h2>
-            <button onclick="changeMonth(1)">下个月</button>
+        <div class="calendar-nav">
+            <button class="btn-sec" onclick="changeMonth(-1)">◀ 上月</button>
+            <h2 id="month-title">2023年10月</h2>
+            <button class="btn-sec" onclick="changeMonth(1)">下月 ▶</button>
         </div>
-        <div style="display: flex; gap: 5px; margin-bottom: 10px; justify-content: center;">
-            <select id="year-select" onchange="jumpToDate()"></select>
-            <select id="month-select" onchange="jumpToDate()"></select>
-            <button onclick="goToday()">回到今天</button>
+        
+        <div style="margin-bottom: 15px; display: flex; gap: 10px; justify-content: center;">
+            <select id="sel-year" onchange="jumpToDate()"></select>
+            <select id="sel-month" onchange="jumpToDate()"></select>
+            <button class="btn-sec" onclick="goToday()">回今天</button>
         </div>
+
         <div class="calendar-grid" id="calendar-grid"></div>
-        <div class="daily-stats" id="daily-stats">请选择日期查看数据</div>
-        <button class="secondary" onclick="showPage('page-home')" style="margin-top: 20px; width: 100%;">返回主页</button>
-    </div>
 
-    <!-- 发货单列表页 -->
-    <div id="page-list" class="page">
-        <div class="toolbar">
-            <button onclick="showPage('page-calendar')" class="secondary">返回日期</button>
-            <h3 id="list-date-title" style="line-height: 40px; margin: 0 10px;"></h3>
-            <button onclick="openAddModal()">+ 新增货物</button>
-            <button onclick="deleteSelected()" class="danger">删除选中</button>
-            <button onclick="toggleCategorize()">分类显示 (按货源)</button>
-            <label style="display: flex; align-items: center; gap: 5px;">
-                <input type="checkbox" id="select-all" onclick="toggleSelectAll()"> 全选
-            </label>
+        <div id="calendar-stat" style="margin-top: 20px; background: white; padding: 20px; border-radius: 12px; text-align: center;">
+            <div style="color: #888; font-size: 14px; margin-bottom: 5px;">今日概览</div>
+            <div id="stat-content">--</div>
         </div>
-        <div class="product-list" id="product-list"></div>
+        
+        <button onclick="showPage('page-home')" style="width:100%; margin-top:20px; padding:15px; background:#ddd;">返回首页</button>
     </div>
 
-    <!-- 新增/编辑弹窗 -->
-    <div id="add-modal" class="modal">
+    <!-- 列表页 -->
+    <div id="page-list" class="page">
+        <div class="sticky-bar">
+            <button class="btn-sec" onclick="showPage('page-calendar')">◀ 返回</button>
+            <strong id="list-date-label" style="flex:1; font-size:16px;"></strong>
+            <button style="background:var(--primary); color:white" onclick="openAddModal()">+ 新增货物</button>
+            <button class="btn-danger" onclick="deleteSelected()">删除</button>
+            <button class="btn-sec" id="btn-group" onclick="toggleGroup()">按货源分类</button>
+        </div>
+
+        <div id="product-list-container" style="margin-top: 15px;"></div>
+    </div>
+
+    <!-- 新增弹窗 -->
+    <div id="modal-add" class="modal">
         <div class="modal-content">
-            <h3 id="modal-title">新增货物信息</h3>
-            <div style="margin-top: 15px;">
-                <h4>从历史记录选择 (按发货量排序)</h4>
-                <div class="history-list" id="history-list"></div>
-            </div>
+            <h3 style="margin-bottom:15px;">新增货物</h3>
             
-            <div class="form-group" style="margin-top: 15px;">
-                <label>自行上传图片</label>
-                <input type="file" id="upload-image" accept="image/*">
-                <img id="preview-image" style="width: 100px; height: 100px; object-fit: cover; margin-top: 10px; display: none; border-radius: 5px;">
+            <label style="font-size:12px; color:#888;">从最近使用中选择：</label>
+            <div class="history-scroll" id="history-list"></div>
+
+            <div style="margin-bottom:15px;">
+                <label style="display:block; margin-bottom:5px; font-weight:bold;">1. 上传新图片</label>
+                <input type="file" id="file-input" accept="image/*" style="width:100%">
+                <img id="img-preview" style="width:80px; height:80px; object-fit:cover; display:none; margin-top:10px; border-radius:5px;">
             </div>
-            
-            <div class="form-group">
-                <label>价格</label>
-                <input type="number" id="input-price" placeholder="请输入价格">
+
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:20px;">
+                <div>
+                    <label style="display:block; margin-bottom:5px; font-weight:bold;">2. 价格</label>
+                    <input type="number" id="form-price" placeholder="金额" style="width:100%">
+                </div>
+                <div>
+                    <label style="display:block; margin-bottom:5px; font-weight:bold;">3. 货源</label>
+                    <input type="text" id="form-source" list="source-options" placeholder="货源地" style="width:100%">
+                    <datalist id="source-options"></datalist>
+                </div>
             </div>
-            
-            <div class="form-group">
-                <label>货源</label>
-                <input type="text" id="input-source" list="source-list" placeholder="输入或选择货源">
-                <datalist id="source-list"></datalist>
-            </div>
-            
-            <div style="display: flex; justify-content: flex-end; gap: 10px;">
-                <button class="secondary" onclick="closeModal()">取消</button>
-                <button onclick="saveProduct()">保存</button>
+
+            <div style="display:flex; gap:10px;">
+                <button class="btn-sec" style="flex:1" onclick="closeModal()">取消</button>
+                <button style="flex:2; background:var(--primary); color:white;" onclick="handleSave()">保存到今日清单</button>
             </div>
         </div>
     </div>
 
 <script>
-    /* ==========================================
-       核心升级：大容量数据库 IndexedDB 引擎
-    ========================================== */
-    const DB_NAME = 'ShippingSuperDB';
-    const STORE_NAME = 'ShipStore';
-    let db = {}; // 内存中的数据缓存
+    /* --- 数据库与数据引擎 --- */
+    const DB_NAME = 'ShipDB_Pro';
+    const STORE_NAME = 'DataStore';
+    let db_cache = {};
+    const SIZES = ['S', 'M', 'L', 'XL', '2XL', '3XL', '4XL'];
 
-    // 初始化数据库
     function initDB() {
-        return new Promise((resolve, reject) => {
-            const request = indexedDB.open(DB_NAME, 1);
-            request.onupgradeneeded = (e) => {
-                const idb = e.target.result;
-                if (!idb.objectStoreNames.contains(STORE_NAME)) {
-                    idb.createObjectStore(STORE_NAME);
-                }
-            };
-            request.onsuccess = (e) => resolve(e.target.result);
-            request.onerror = (e) => reject('数据库打开失败');
+        return new Promise((resolve) => {
+            const req = indexedDB.open(DB_NAME, 1);
+            req.onupgradeneeded = (e) => e.target.result.createObjectStore(STORE_NAME);
+            req.onsuccess = (e) => resolve(e.target.result);
         });
     }
 
-    // 从数据库加载数据
-    async function loadDataFromDB() {
-        try {
-            const idb = await initDB();
-            return new Promise((resolve) => {
-                const tx = idb.transaction(STORE_NAME, 'readonly');
-                const store = tx.objectStore(STORE_NAME);
-                const req = store.get('ALL_DATA');
-                req.onsuccess = () => resolve(req.result || {});
-                req.onerror = () => resolve({});
-            });
-        } catch (e) {
-            console.error(e); return {};
-        }
+    async function loadAll() {
+        const idb = await initDB();
+        return new Promise(res => {
+            const tx = idb.transaction(STORE_NAME, 'readonly');
+            const req = tx.objectStore(STORE_NAME).get('SHIP_DATA');
+            req.onsuccess = () => res(req.result || {});
+        });
     }
 
-    // 异步保存数据到数据库 (无视5MB限制)
-    async function saveData() {
-        try {
-            const idb = await initDB();
-            const tx = idb.transaction(STORE_NAME, 'readwrite');
-            const store = tx.objectStore(STORE_NAME);
-            store.put(db, 'ALL_DATA');
-        } catch (e) {
-            console.error("保存失败:", e);
-        }
+    async function persist() {
+        const idb = await initDB();
+        const tx = idb.transaction(STORE_NAME, 'readwrite');
+        tx.objectStore(STORE_NAME).put(db_cache, 'SHIP_DATA');
     }
 
-    // 彻底清理所有数据（同时清理旧的localStorage和新的IndexedDB）
     function clearAllData() {
-        if(confirm("确定要彻底清理吗？\n这将删除所有日期的记录和图片，系统将完全重置！")) {
-            localStorage.clear(); 
-            indexedDB.deleteDatabase(DB_NAME); 
-            alert("清理成功！系统已完全重置。");
-            location.reload(); 
+        if(confirm("确定要永久清空所有数据和图片吗？")) {
+            indexedDB.deleteDatabase(DB_NAME);
+            location.reload();
         }
     }
 
-    /* ==========================================
-       系统业务逻辑
-    ========================================== */
-    const sizes = ['S', 'M', 'L', 'XL', '2XL', '3XL', '4XL'];
-    let currentDate = new Date();
-    let selectedDateStr = '';
-    let isCategorized = false;
-    let selectedImageBase64 = '';
+    /* --- 核心业务变量 --- */
+    let viewDate = new Date();
+    let activeDateStr = '';
+    let isGrouped = false;
+    let selectedImgBase64 = '';
 
-    // 系统启动入口
     window.onload = async () => {
-        db = await loadDataFromDB(); 
-        document.querySelector('#page-home h2').style.display = 'none';
+        db_cache = await loadAll();
         const btn = document.getElementById('btn-enter');
-        btn.innerText = '进入发货单';
+        btn.innerText = '进入管理系统';
         btn.disabled = false;
+        btn.onclick = () => {
+            showPage('page-calendar');
+            renderCalendar();
+        };
+        initSelectors();
     };
 
-    document.getElementById('btn-enter').addEventListener('click', () => {
-        showPage('page-calendar');
-        initCalendarControls();
-        renderCalendar();
-    });
-
-    // 控制页面显示，并加入强制置顶防止下滑
+    /* --- 导航控制 --- */
     function showPage(pageId) {
+        // 1. 隐藏所有页面
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-        document.getElementById(pageId).classList.add('active');
+        // 2. 强制回到顶部
+        window.scrollTo(0, 0);
+        // 3. 显示目标页
+        const target = document.getElementById(pageId);
+        target.classList.add('active');
         
-        // 关键修复：页面切换时，强制浏览器滚动条回到最顶端
-        window.scrollTo(0, 0); 
-
+        // 4. 特殊页面逻辑
         if(pageId === 'page-calendar') {
-            updateDailyStats(formatDateStr(currentDate));
-            isCategorized = false; 
+            updateGlobalStat(fmtDate(new Date()));
         }
     }
 
-    function initCalendarControls() {
-        const yearSel = document.getElementById('year-select');
-        const monthSel = document.getElementById('month-select');
-        yearSel.innerHTML = ''; monthSel.innerHTML = '';
-        const currentYear = new Date().getFullYear();
-        for(let i = currentYear - 2; i <= currentYear + 2; i++) yearSel.add(new Option(i + '年', i));
-        for(let i = 0; i < 12; i++) monthSel.add(new Option((i+1) + '月', i));
-        yearSel.value = currentDate.getFullYear();
-        monthSel.value = currentDate.getMonth();
+    /* --- 日历逻辑 --- */
+    function initSelectors() {
+        const ys = document.getElementById('sel-year'), ms = document.getElementById('sel-month');
+        const curY = new Date().getFullYear();
+        for(let i=curY-2; i<=curY+2; i++) ys.add(new Option(i+'年', i));
+        for(let i=0; i<12; i++) ms.add(new Option((i+1)+'月', i));
+        ys.value = viewDate.getFullYear();
+        ms.value = viewDate.getMonth();
     }
 
-    function changeMonth(delta) { currentDate.setMonth(currentDate.getMonth() + delta); initCalendarControls(); renderCalendar(); }
-    function jumpToDate() { currentDate.setFullYear(document.getElementById('year-select').value); currentDate.setMonth(document.getElementById('month-select').value); renderCalendar(); }
-    function goToday() { currentDate = new Date(); initCalendarControls(); renderCalendar(); }
-    function formatDateStr(date) { return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`; }
+    function changeMonth(d) { viewDate.setMonth(viewDate.getMonth() + d); syncSelectors(); renderCalendar(); }
+    function jumpToDate() { viewDate.setFullYear(document.getElementById('sel-year').value); viewDate.setMonth(document.getElementById('sel-month').value); renderCalendar(); }
+    function goToday() { viewDate = new Date(); syncSelectors(); renderCalendar(); }
+    function syncSelectors() { document.getElementById('sel-year').value = viewDate.getFullYear(); document.getElementById('sel-month').value = viewDate.getMonth(); }
+    function fmtDate(d) { return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
 
     function renderCalendar() {
-        const y = currentDate.getFullYear(), m = currentDate.getMonth();
-        document.getElementById('current-month-year').innerText = `${y}年${m+1}月`;
-        const firstDay = new Date(y, m, 1).getDay(), daysInMonth = new Date(y, m + 1, 0).getDate();
+        const y = viewDate.getFullYear(), m = viewDate.getMonth();
+        document.getElementById('month-title').innerText = `${y}年${m+1}月`;
         const grid = document.getElementById('calendar-grid');
         grid.innerHTML = '';
-        ['日', '一', '二', '三', '四', '五', '六'].forEach(n => grid.innerHTML += `<div class="day-header">${n}</div>`);
-        for(let i = 0; i < firstDay; i++) grid.innerHTML += `<div></div>`;
-        const todayStr = formatDateStr(new Date());
+        ['日','一','二','三','四','五','六'].forEach(w => grid.innerHTML += `<div class="day-header">${w}</div>`);
+        
+        const firstDay = new Date(y, m, 1).getDay();
+        const days = new Date(y, m+1, 0).getDate();
+        for(let i=0; i<firstDay; i++) grid.innerHTML += `<div></div>`;
 
-        for(let i = 1; i <= daysInMonth; i++) {
-            const dateStr = formatDateStr(new Date(y, m, i));
-            const div = document.createElement('div');
-            div.className = `day-cell ${dateStr === todayStr ? 'today' : ''}`;
-            div.innerText = i;
+        const today = fmtDate(new Date());
+        for(let i=1; i<=days; i++) {
+            const dStr = fmtDate(new Date(y, m, i));
+            const cell = document.createElement('div');
+            cell.className = `day-cell ${dStr === today ? 'today' : ''}`;
             
-            let dayTotal = 0;
-            if(db[dateStr]) db[dateStr].forEach(p => sizes.forEach(s => dayTotal += p.sizes[s].s));
-            if(dayTotal > 0) div.innerHTML += `<br><span style="font-size:10px; color:var(--primary)">发:${dayTotal}</span>`;
-
-            div.onclick = () => {
-                selectedDateStr = dateStr; updateDailyStats(dateStr);
-                document.getElementById('list-date-title').innerText = `${dateStr} 发货单`;
-                renderList(); showPage('page-list');
-            };
-            grid.appendChild(div);
+            let count = 0;
+            if(db_cache[dStr]) db_cache[dStr].forEach(p => SIZES.forEach(s => count += (p.sizes[s].s || 0)));
+            
+            cell.innerHTML = `<span class="num">${i}</span>${count > 0 ? `<span class="badge">发:${count}</span>` : ''}`;
+            cell.onclick = () => openDateList(dStr);
+            grid.appendChild(cell);
         }
     }
 
-    function updateDailyStats(dateStr) {
-        let shipTotal = 0, returnTotal = 0;
-        if(db[dateStr]) db[dateStr].forEach(p => sizes.forEach(s => { shipTotal += p.sizes[s].s; returnTotal += p.sizes[s].r; }));
-        document.getElementById('daily-stats').innerHTML = `<b>${dateStr}</b> 统计<br>总发货量: <span style="color:var(--primary); font-size:24px">${shipTotal}</span> | 总退货量: <span style="color:var(--danger); font-size:24px">${returnTotal}</span>`;
+    function updateGlobalStat(dStr) {
+        let s = 0, r = 0;
+        if(db_cache[dStr]) db_cache[dStr].forEach(p => SIZES.forEach(sz => { s += p.sizes[sz].s; r += p.sizes[sz].r; }));
+        document.getElementById('stat-content').innerHTML = `
+            <span style="font-size:14px; color:#666">${dStr}</span><br>
+            <span style="color:var(--primary); font-size:24px; font-weight:bold;">${s}</span> 发货 | 
+            <span style="color:var(--danger); font-size:24px; font-weight:bold;">${r}</span> 退货
+        `;
     }
 
-    function generateId() { return Math.random().toString(36).substr(2, 9); }
-    function createEmptySizes() { let obj = {}; sizes.forEach(s => obj[s] = { s: 0, r: 0 }); return obj; }
+    /* --- 列表逻辑 --- */
+    function openDateList(dStr) {
+        activeDateStr = dStr;
+        document.getElementById('list-date-label').innerText = dStr;
+        isGrouped = false;
+        renderList();
+        showPage('page-list');
+    }
 
     function renderList() {
-        const container = document.getElementById('product-list');
+        const container = document.getElementById('product-list-container');
         container.innerHTML = '';
-        let products = db[selectedDateStr] || [];
-        if(products.length === 0) { container.innerHTML = '<p style="text-align:center; color:#888;">今日暂无数据，请点击新增。</p>'; return; }
+        const list = db_cache[activeDateStr] || [];
+        
+        if(list.length === 0) {
+            container.innerHTML = `<div style="text-align:center; color:#bbb; padding-top:50px;">今日空空如也，点击右上角新增</div>`;
+            return;
+        }
 
-        let renderQueue = [];
-        if (isCategorized) {
-            const grouped = {};
-            products.forEach(p => { const src = p.source || '未分类'; if(!grouped[src]) grouped[src] = []; grouped[src].push(p); });
-            for(let src in grouped) {
-                renderQueue.push({ type: 'header', text: `货源: ${src}` });
-                renderQueue = renderQueue.concat(grouped[src].map(p => ({type: 'item', data: p})));
+        if(isGrouped) {
+            const groups = {};
+            list.forEach(p => { const src = p.source || '未分类'; if(!groups[src]) groups[src] = []; groups[src].push(p); });
+            for(let src in groups) {
+                const head = document.createElement('div');
+                head.style = "padding:10px; font-weight:bold; background:#eee; border-radius:5px; margin:10px 0;";
+                head.innerText = `货源: ${src}`;
+                container.appendChild(head);
+                groups[src].forEach(p => container.appendChild(createItemCard(p)));
             }
         } else {
-            renderQueue = products.map(p => ({type: 'item', data: p}));
+            list.forEach(p => container.appendChild(createItemCard(p)));
         }
-
-        renderQueue.forEach(row => {
-            if (row.type === 'header') {
-                const div = document.createElement('div'); div.className = 'group-header'; div.innerText = row.text; container.appendChild(div);
-            } else container.appendChild(createProductDOM(row.data));
-        });
-        document.getElementById('select-all').checked = false;
-        updateDailyStats(selectedDateStr); 
+        updateGlobalStat(activeDateStr);
     }
 
-    // 重构的商品卡片结构
-    function createProductDOM(product) {
-        const div = document.createElement('div'); div.className = 'product-item'; div.dataset.id = product.id;
-        let pShip = 0, pRet = 0, sizesHTML = '';
-        sizes.forEach(s => { 
-            pShip += product.sizes[s].s; pRet += product.sizes[s].r; 
-            sizesHTML += `<div class="size-box"><span>${s}</span>
-                <input type="number" placeholder="发" value="${product.sizes[s].s || ''}" onchange="updateQty('${product.id}', '${s}', 's', this.value)">
-                <input type="number" placeholder="退" value="${product.sizes[s].r || ''}" onchange="updateQty('${product.id}', '${s}', 'r', this.value)"></div>`;
-        });
-        
-        div.innerHTML = `
-            <div class="item-checkbox"><input type="checkbox" class="row-check" value="${product.id}"></div>
-            <img src="${product.img || 'https://via.placeholder.com/80'}" class="item-img">
-            
-            <!-- 弱化：小巧的价格和货源输入框 -->
-            <div class="item-meta">
-                <input type="number" placeholder="价格(元)" title="价格" value="${product.price}" onchange="updateInfo('${product.id}', 'price', this.value)">
-                <input type="text" placeholder="货源地" title="货源" value="${product.source}" onchange="updateInfo('${product.id}', 'source', this.value)">
+    function createItemCard(p) {
+        const card = document.createElement('div');
+        card.className = 'product-card';
+        let sSum = 0, rSum = 0;
+        SIZES.forEach(s => { sSum += p.sizes[s].s; rSum += p.sizes[s].r; });
+
+        card.innerHTML = `
+            <input type="checkbox" class="item-sel" value="${p.id}" style="margin-top:5px">
+            <img src="${p.img}" class="item-img">
+            <div class="item-info">
+                <div class="item-inputs">
+                    <input type="number" value="${p.price}" placeholder="价格" onchange="updateInfo('${p.id}','price',this.value)">
+                    <input type="text" value="${p.source}" placeholder="货源" onchange="updateInfo('${p.id}','source',this.value)">
+                </div>
+                <div class="size-grid">
+                    ${SIZES.map(s => `
+                        <div class="size-item">
+                            <div>${s}</div>
+                            <input type="number" value="${p.sizes[s].s || ''}" placeholder="发" onchange="updateQty('${p.id}','${s}','s',this.value)">
+                            <input type="number" value="${p.sizes[s].r || ''}" placeholder="退" onchange="updateQty('${p.id}','${s}','r',this.value)">
+                        </div>
+                    `).join('')}
+                </div>
             </div>
-            
-            <!-- 尺码输入区 -->
-            <div class="item-sizes">${sizesHTML}</div>
-            
-            <!-- 强化：突出的总发与总退显示板 -->
-            <div class="item-totals">
-                <div class="total-box">
-                    <span class="lbl">总发数</span>
-                    <span class="val-ship">${pShip}</span>
-                </div>
-                <div class="total-box">
-                    <span class="lbl">总退数</span>
-                    <span class="val-ret">${pRet}</span>
-                </div>
-            </div>`;
-        return div;
+            <div class="item-summary">
+                <div class="sum-box"><span class="label">发</span><span class="val ship">${sSum}</span></div>
+                <div class="sum-box"><span class="label">退</span><span class="val ret">${rSum}</span></div>
+            </div>
+        `;
+        return card;
     }
 
-    function updateQty(id, size, type, val) {
-        const v = parseInt(val) || 0; const product = db[selectedDateStr].find(p => p.id === id);
-        if(product) { product.sizes[size][type] = Math.max(0, v); saveData(); renderList(); }
+    function updateQty(pid, size, type, val) {
+        const p = db_cache[activeDateStr].find(x => x.id === pid);
+        if(p) { p.sizes[size][type] = parseInt(val) || 0; persist(); renderList(); }
     }
 
-    function updateInfo(id, field, val) {
-        const product = db[selectedDateStr].find(p => p.id === id);
-        if(product) { product[field] = val; saveData(); if(isCategorized && field === 'source') renderList(); }
+    function updateInfo(pid, field, val) {
+        const p = db_cache[activeDateStr].find(x => x.id === pid);
+        if(p) { p[field] = val; persist(); if(isGrouped && field === 'source') renderList(); }
     }
 
-    function toggleSelectAll() {
-        const checked = document.getElementById('select-all').checked;
-        document.querySelectorAll('.row-check').forEach(cb => cb.checked = checked);
-    }
+    function toggleGroup() { isGrouped = !isGrouped; renderList(); }
 
     function deleteSelected() {
-        const checked = Array.from(document.querySelectorAll('.row-check:checked')).map(cb => cb.value);
-        if(checked.length === 0) return alert('请先勾选要删除的货物');
-        if(confirm(`确定删除这 ${checked.length} 项吗？`)) {
-            db[selectedDateStr] = db[selectedDateStr].filter(p => !checked.includes(p.id));
-            saveData(); renderList();
+        const ids = Array.from(document.querySelectorAll('.item-sel:checked')).map(el => el.value);
+        if(ids.length === 0) return;
+        if(confirm(`确定删除选中的 ${ids.length} 项吗?`)) {
+            db_cache[activeDateStr] = db_cache[activeDateStr].filter(p => !ids.includes(p.id));
+            persist(); renderList();
         }
     }
 
-    function toggleCategorize() { isCategorized = !isCategorized; renderList(); }
-
+    /* --- 新增弹窗逻辑 --- */
     function openAddModal() {
-        selectedImageBase64 = '';
-        document.getElementById('modal-title').innerText = '新增货物';
-        document.getElementById('input-price').value = '';
-        document.getElementById('input-source').value = '';
-        document.getElementById('upload-image').value = '';
-        document.getElementById('preview-image').style.display = 'none';
+        selectedImgBase64 = '';
+        document.getElementById('img-preview').style.display = 'none';
+        document.getElementById('form-price').value = '';
+        document.getElementById('form-source').value = '';
+        document.getElementById('file-input').value = '';
         loadHistory();
-        document.getElementById('add-modal').classList.add('active');
+        document.getElementById('modal-add').classList.add('active');
     }
 
-    function closeModal() { document.getElementById('add-modal').classList.remove('active'); }
+    function closeModal() { document.getElementById('modal-add').classList.remove('active'); }
 
     function loadHistory() {
-        const historyMap = {}; const sourceSet = new Set();
-        for(let date in db) {
-            db[date].forEach(p => {
-                if(!p.img) return;
-                const key = p.img + '_||_' + p.source; let shipTotal = 0;
-                sizes.forEach(s => shipTotal += p.sizes[s].s);
-                if(!historyMap[key]) historyMap[key] = { img: p.img, source: p.source, price: p.price, totalShip: 0 };
-                historyMap[key].totalShip += shipTotal;
-                if(p.source) sourceSet.add(p.source);
+        const histDiv = document.getElementById('history-list');
+        const opts = document.getElementById('source-options');
+        histDiv.innerHTML = ''; opts.innerHTML = '';
+        const history = [];
+        const sources = new Set();
+
+        for(let d in db_cache) {
+            db_cache[d].forEach(p => {
+                sources.add(p.source);
+                if(!history.find(h => h.img === p.img)) {
+                    history.push({ img: p.img, price: p.price, source: p.source });
+                }
             });
         }
-        const dl = document.getElementById('source-list'); dl.innerHTML = '';
-        sourceSet.forEach(src => dl.innerHTML += `<option value="${src}">`);
-
-        const histArray = Object.values(historyMap).sort((a, b) => b.totalShip - a.totalShip);
-        const histContainer = document.getElementById('history-list'); histContainer.innerHTML = '';
-        if(histArray.length === 0) { histContainer.innerHTML = '<span style="font-size:12px; color:#888;">暂无历史记录</span>'; return; }
-
-        histArray.forEach(h => {
-            const div = document.createElement('div'); div.className = 'history-item';
-            div.innerHTML = `<img src="${h.img}"><div class="history-badge">发过:${h.totalShip}</div><div style="font-size:10px; margin-top:2px;">${h.source || '无货源'}</div>`;
+        sources.forEach(s => opts.innerHTML += `<option value="${s}">`);
+        
+        if(history.length === 0) histDiv.innerHTML = '<span style="color:#ccc; font-size:12px;">暂无历史记录</span>';
+        history.reverse().slice(0, 10).forEach(h => {
+            const div = document.createElement('div');
+            div.className = 'hist-card';
+            div.innerHTML = `<img src="${h.img}"><div style="font-size:10px; color:#888;">${h.source}</div>`;
             div.onclick = () => {
-                document.querySelectorAll('.history-item').forEach(el => el.classList.remove('selected'));
+                document.querySelectorAll('.hist-card').forEach(c => c.classList.remove('selected'));
                 div.classList.add('selected');
-                selectedImageBase64 = h.img; document.getElementById('input-price').value = h.price; document.getElementById('input-source').value = h.source;
-                document.getElementById('upload-image').value = ''; document.getElementById('preview-image').style.display = 'none';
+                selectedImgBase64 = h.img;
+                document.getElementById('form-price').value = h.price;
+                document.getElementById('form-source').value = h.source;
             };
-            histContainer.appendChild(div);
+            histDiv.appendChild(div);
         });
     }
 
-    document.getElementById('upload-image').addEventListener('change', function(e) {
-        const file = e.target.files[0]; if(!file) return;
-        document.querySelectorAll('.history-item').forEach(el => el.classList.remove('selected'));
+    document.getElementById('file-input').onchange = function(e) {
+        const file = e.target.files[0];
+        if(!file) return;
         const reader = new FileReader();
-        reader.onload = function(event) {
+        reader.onload = function(ev) {
             const img = new Image();
             img.onload = function() {
                 const canvas = document.createElement('canvas');
                 const ctx = canvas.getContext('2d');
-                const MAX_WIDTH = 250, MAX_HEIGHT = 250;
-                let width = img.width, height = img.height;
-                if (width > height) { if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; } } 
-                else { if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; } }
-                canvas.width = width; canvas.height = height;
-                ctx.drawImage(img, 0, 0, width, height);
-                selectedImageBase64 = canvas.toDataURL('image/jpeg', 0.5); 
-                const preview = document.getElementById('preview-image');
-                preview.src = selectedImageBase64; preview.style.display = 'block';
+                const max = 300;
+                let w = img.width, h = img.height;
+                if(w > h) { if(w > max) { h *= max/w; w = max; } } else { if(h > max) { w *= max/h; h = max; } }
+                canvas.width = w; canvas.height = h;
+                ctx.drawImage(img, 0, 0, w, h);
+                selectedImgBase64 = canvas.toDataURL('image/jpeg', 0.6);
+                const prev = document.getElementById('img-preview');
+                prev.src = selectedImgBase64;
+                prev.style.display = 'block';
+                document.querySelectorAll('.hist-card').forEach(c => c.classList.remove('selected'));
             };
-            img.src = event.target.result;
+            img.src = ev.target.result;
         };
         reader.readAsDataURL(file);
-    });
+    };
 
-    function saveProduct() {
-        const price = document.getElementById('input-price').value;
-        const source = document.getElementById('input-source').value;
-        if(!selectedImageBase64) return alert('请上传图片或从历史中选择');
-        if(!db[selectedDateStr]) db[selectedDateStr] = [];
-        db[selectedDateStr].push({ id: generateId(), img: selectedImageBase64, price: price, source: source, sizes: createEmptySizes() });
-        saveData(); closeModal(); renderList();
-        setTimeout(() => window.scrollTo(0, document.body.scrollHeight), 100);
+    function handleSave() {
+        if(!selectedImgBase64) return alert("请上传或选择图片");
+        const price = document.getElementById('form-price').value;
+        const source = document.getElementById('form-source').value;
+        
+        if(!db_cache[activeDateStr]) db_cache[activeDateStr] = [];
+        const newProduct = {
+            id: Date.now().toString(36),
+            img: selectedImgBase64,
+            price: price,
+            source: source,
+            sizes: {}
+        };
+        SIZES.forEach(s => newProduct.sizes[s] = { s:0, r:0 });
+        
+        db_cache[activeDateStr].push(newProduct);
+        persist();
+        closeModal();
+        renderList();
     }
 </script>
 </body>
